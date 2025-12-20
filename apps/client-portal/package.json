@@ -1,4 +1,5 @@
 {
+  "_testAutodeploy": "2024-12-20",
   "name": "client-portal",
   "version": "1.0.0",
   "private": true,
