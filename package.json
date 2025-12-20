@@ -1,0 +1,24 @@
+{
+  "name": "pg19-billing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ISP Billing System - Web Interfaces",
+  "scripts": {
+    "dev:client": "pnpm --filter client-portal dev",
+    "dev:admin": "pnpm --filter admin-panel dev",
+    "dev": "pnpm run --parallel dev:client dev:admin",
+    "build:client": "pnpm --filter client-portal build",
+    "build:admin": "pnpm --filter admin-panel build",
+    "build": "pnpm run --parallel build:client build:admin",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

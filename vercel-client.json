@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm --filter client-portal build",
+  "outputDirectory": "apps/client-portal/.output/public",
+  "installCommand": "pnpm install"
+}

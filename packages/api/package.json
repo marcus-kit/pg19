@@ -1,0 +1,21 @@
+{
+  "name": "@pg19/api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "import": "./index.ts"
+    },
+    "./composables": {
+      "types": "./composables/index.ts",
+      "import": "./composables/index.ts"
+    }
+  },
+  "dependencies": {
+    "@directus/sdk": "^17.0.0",
+    "@pg19/types": "workspace:*"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@pg19/ui",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "import": "./index.ts"
+    },
+    "./components/*": {
+      "types": "./components/*.vue",
+      "import": "./components/*.vue"
+    },
+    "./tailwind.preset": {
+      "require": "./tailwind.preset.js",
+      "import": "./tailwind.preset.js"
+    },
+    "./tailwind.preset.js": {
+      "require": "./tailwind.preset.js",
+      "import": "./tailwind.preset.js"
+    }
+  },
+  "dependencies": {
+    "@headlessui/vue": "^1.7.0",
+    "@heroicons/vue": "^2.1.0",
+    "@pg19/types": "workspace:*",
+    "vue": "^3.4.0"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  }
+}

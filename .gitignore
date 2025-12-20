@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Nuxt build
+.nuxt/
+.output/
+dist/
+
+# Vercel
+.vercel/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Logs
+*.log
