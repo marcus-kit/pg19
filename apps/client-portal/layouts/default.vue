@@ -36,14 +36,14 @@
 <script setup lang="ts">
 import { AppHeader, AppFooter } from '@pg19/ui';
 import { useAuthStore } from '~/stores/auth';
-import { formatShortName } from '@pg19/ui';
+import { formatFullName } from '@pg19/ui';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const userName = computed(() => {
   if (authStore.person) {
-    return formatShortName(authStore.person);
+    return formatFullName(authStore.person);
   }
   return '';
 });

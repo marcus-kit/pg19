@@ -26,7 +26,7 @@
             <span class="text-sm text-gray-700">{{ user }}</span>
             <button
               type="button"
-              class="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              class="text-sm px-3 py-1.5 bg-accent-pink text-white rounded-lg hover:bg-pink-700 transition-colors"
               @click="$emit('logout')"
             >
               Выход
