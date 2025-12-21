@@ -27,7 +27,7 @@ import { computed } from 'vue';
 // Icons
 import HomeIcon from '~/components/icons/HomeIcon.vue';
 import WalletIcon from '~/components/icons/WalletIcon.vue';
-import HistoryIcon from '~/components/icons/HistoryIcon.vue';
+import LockIcon from '~/components/icons/LockIcon.vue';
 import SupportIcon from '~/components/icons/SupportIcon.vue';
 import UserIcon from '~/components/icons/UserIcon.vue';
 
@@ -58,9 +58,9 @@ const navItems = computed<NavItem[]>(() => [
     badge: props.unpaidInvoices,
   },
   {
-    to: '/transactions',
-    label: 'История',
-    icon: HistoryIcon,
+    to: '/security',
+    label: 'Безопасность',
+    icon: LockIcon,
   },
   {
     to: '/support',
