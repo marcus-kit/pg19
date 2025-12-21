@@ -23,32 +23,23 @@
           <!-- Badge -->
           <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-sm text-white/90">
             <span class="w-2 h-2 bg-secondary-400 rounded-full animate-pulse" />
-            Работаем в Таганроге, Ростове и Батайске
+            Без ограничений. Без блокировок.
           </div>
 
           <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.1]">
-            Интернет
+            Доступ в
             <span class="relative">
               <span class="bg-gradient-to-r from-secondary-400 to-secondary-300 bg-clip-text text-transparent">
-                1 Гбит/с
+                по-настоящему
               </span>
-              <svg class="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
-                <path d="M2 10C50 2 150 2 198 10" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round"/>
-                <defs>
-                  <linearGradient id="gradient" x1="0" y1="0" x2="200" y2="0">
-                    <stop stop-color="#0DA342"/>
-                    <stop offset="1" stop-color="#34D399"/>
-                  </linearGradient>
-                </defs>
-              </svg>
             </span>
             <br />
-            <span class="text-white/90">за 699 ₽/мес</span>
+            <span class="text-white">свободный интернет</span>
           </h1>
 
           <p class="text-lg sm:text-xl text-white/70 max-w-xl mx-auto lg:mx-0">
-            Гигабитный интернет + 191 ТВ канал в одном пакете.
-            Без скрытых платежей. Подключение бесплатно.
+            Никаких замедлений YouTube и Discord. Гигабитная скорость 1000 Мбит/с.
+            Интернет + 191 ТВ канал — всего 699 ₽/мес.
           </p>
 
           <!-- Stats row -->
