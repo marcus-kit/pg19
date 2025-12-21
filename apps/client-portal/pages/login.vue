@@ -107,16 +107,17 @@ const tabs = [
   { id: 'email' as const, label: 'Email', shortLabel: 'Email', icon: EmailIcon },
 ];
 
-function handleAuthSuccess(data: {
-  person?: Person;
-  contract?: Contract;
-  accounts?: Account[];
-}) {
-  if (data.person && data.contract && data.accounts) {
+function handleAuthSuccess(data: unknown) {
+  const authData = data as {
+    person?: Person;
+    contract?: Contract;
+    accounts?: Account[];
+  };
+  if (authData.person && authData.contract && authData.accounts) {
     authStore.setAuth(
-      data.person as Person,
-      data.contract as Contract,
-      data.accounts as Account[]
+      authData.person,
+      authData.contract,
+      authData.accounts
     );
     router.push('/dashboard');
   }

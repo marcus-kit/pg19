@@ -45,11 +45,13 @@ function buildQueryString(params?: QueryParams): string {
   return queryParts.length > 0 ? '?' + queryParts.join('&') : '';
 }
 
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
 export function useApi() {
   // Use server-side proxy for all API calls
   async function fetchApi<T>(path: string, options: {
-    method?: string;
-    body?: unknown;
+    method?: HttpMethod;
+    body?: Record<string, unknown> | null;
     params?: QueryParams;
   } = {}): Promise<T> {
     const queryString = buildQueryString(options.params);
@@ -94,6 +96,16 @@ export function useApi() {
         ...params
       };
       return fetchApi<Transaction[]>('transactions', { params: mergedParams });
+    },
+
+    async getAccountTransactions(accountId: string, params?: { limit?: number }) {
+      return fetchApi<Transaction[]>('transactions', {
+        params: {
+          filter: { account_id: { _eq: accountId } },
+          sort: ['-date_created'],
+          limit: params?.limit || 10,
+        }
+      });
     },
 
     // ============ Invoices ============
