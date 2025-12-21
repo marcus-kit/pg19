@@ -10,10 +10,10 @@
         alt=""
         class="w-full h-full object-cover"
       />
-      <!-- Dark overlay for text readability -->
-      <div class="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/85 to-slate-900/70" />
+      <!-- Dark overlay for text readability - more transparent to show the ship -->
+      <div class="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/60 to-slate-900/40" />
       <!-- Accent gradient overlay -->
-      <div class="absolute inset-0 bg-gradient-to-br from-primary-900/40 to-transparent" />
+      <div class="absolute inset-0 bg-gradient-to-br from-primary-900/20 to-transparent" />
     </div>
 
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 w-full">
@@ -89,7 +89,7 @@
             <!-- Glow effect -->
             <div class="absolute -inset-1 bg-gradient-to-r from-secondary-500/50 to-primary-500/50 rounded-3xl blur-xl opacity-50" />
 
-            <div class="relative bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 border border-amber-200/50">
+            <div class="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 border border-amber-200/50">
               <div class="flex items-center gap-3 mb-6">
                 <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30 text-2xl">
                   🧭
