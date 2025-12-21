@@ -22,24 +22,25 @@
         <div class="text-center lg:text-left space-y-8">
           <!-- Badge -->
           <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full text-sm text-white/90">
-            <span class="w-2 h-2 bg-secondary-400 rounded-full animate-pulse" />
-            Без ограничений. Без блокировок.
+            <span class="text-lg">⚓</span>
+            Свободное плавание по сети
           </div>
 
           <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white leading-[1.1]">
-            Доступ в
+            <span class="text-white/90">Поднимай паруса!</span>
+            <br />
             <span class="relative">
-              <span class="bg-gradient-to-r from-secondary-400 to-secondary-300 bg-clip-text text-transparent">
-                по-настоящему
+              <span class="bg-gradient-to-r from-amber-400 to-yellow-300 bg-clip-text text-transparent">
+                Свободный интернет
               </span>
             </span>
             <br />
-            <span class="text-white">свободный интернет</span>
+            <span class="text-white/80 text-3xl sm:text-4xl lg:text-5xl">без блокировок ☠️</span>
           </h1>
 
           <p class="text-lg sm:text-xl text-white/70 max-w-xl mx-auto lg:mx-0">
-            Никаких замедлений YouTube и Discord. Гигабитная скорость 1000 Мбит/с.
-            Интернет + 191 ТВ канал — всего 699 ₽/мес.
+            Плыви куда хочешь — YouTube, Discord, Telegram на полной скорости.
+            Никаких рифов и мелей. 1000 Мбит/с за 699 ₽/мес.
           </p>
 
           <!-- Stats row -->
@@ -47,21 +48,21 @@
             <div class="text-center">
               <div class="text-3xl sm:text-4xl font-bold text-white flex items-baseline gap-1">
                 {{ companyInfo.stats.speed }}
-                <span class="text-lg text-secondary-400">Мбит/с</span>
+                <span class="text-lg text-amber-400">Мбит/с</span>
               </div>
-              <div class="text-sm text-white/50 mt-1">скорость</div>
+              <div class="text-sm text-white/50 mt-1">⚡ скорость</div>
             </div>
             <div class="text-center">
               <div class="text-3xl sm:text-4xl font-bold text-white">
                 {{ companyInfo.stats.channels }}
               </div>
-              <div class="text-sm text-white/50 mt-1">ТВ каналов</div>
+              <div class="text-sm text-white/50 mt-1">📺 ТВ каналов</div>
             </div>
             <div class="text-center">
               <div class="text-3xl sm:text-4xl font-bold text-white">
-                {{ companyInfo.stats.devices }}
+                0
               </div>
-              <div class="text-sm text-white/50 mt-1">устройств</div>
+              <div class="text-sm text-white/50 mt-1">🚫 блокировок</div>
             </div>
           </div>
 
@@ -69,9 +70,9 @@
           <div class="flex flex-col sm:flex-row gap-4 lg:hidden">
             <a
               href="#tariffs"
-              class="flex-1 py-4 px-6 bg-secondary-500 hover:bg-secondary-400 text-white font-semibold rounded-xl transition-all shadow-lg shadow-secondary-500/25 text-center"
+              class="flex-1 py-4 px-6 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold rounded-xl transition-all shadow-lg shadow-amber-500/25 text-center"
             >
-              Подключить
+              🏴‍☠️ На абордаж!
             </a>
             <a
               :href="`tel:${companyInfo.phone}`"
@@ -88,20 +89,17 @@
             <!-- Glow effect -->
             <div class="absolute -inset-1 bg-gradient-to-r from-secondary-500/50 to-primary-500/50 rounded-3xl blur-xl opacity-50" />
 
-            <div class="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 border border-white/50">
+            <div class="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 border border-amber-200/50">
               <div class="flex items-center gap-3 mb-6">
-                <div class="w-12 h-12 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-xl flex items-center justify-center shadow-lg shadow-secondary-500/30">
-                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+                <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30 text-2xl">
+                  🧭
                 </div>
                 <div>
                   <h2 class="text-xl font-bold text-gray-900">
-                    Проверьте адрес
+                    Проложи курс
                   </h2>
                   <p class="text-sm text-gray-500">
-                    Узнайте о возможности подключения
+                    Проверь, доходит ли сигнал до твоего порта
                   </p>
                 </div>
               </div>
@@ -109,7 +107,7 @@
               <AddressCheckForm @submit="handleAddressCheck" />
 
               <p class="mt-4 text-xs text-gray-400 text-center">
-                Бесплатная консультация и выезд мастера
+                ⚓ Бесплатный выезд капитана на борт
               </p>
             </div>
           </div>
