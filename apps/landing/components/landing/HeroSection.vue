@@ -39,7 +39,7 @@
           </h1>
 
           <p class="text-lg sm:text-xl text-white/70 max-w-xl mx-auto lg:mx-0">
-            Плыви куда хочешь — YouTube, Discord, Telegram на полной скорости.
+            Плыви куда хочешь - YouTube, Discord, Telegram на полной скорости.
             Никаких рифов и мелей. 1000 Мбит/с за 699 ₽/мес.
           </p>
 

@@ -28,7 +28,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'ru' },
-      title: 'PG19 — Высокоскоростной интернет в Таганроге',
+      title: 'PG19 - Высокоскоростной интернет в Таганроге',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -36,13 +36,13 @@ export default defineNuxtConfig({
         { name: 'keywords', content: 'интернет таганрог, провайдер таганрог, подключить интернет, PG19, домашний интернет' },
         // Open Graph
         { property: 'og:type', content: 'website' },
-        { property: 'og:title', content: 'PG19 — Высокоскоростной интернет в Таганроге' },
+        { property: 'og:title', content: 'PG19 - Высокоскоростной интернет в Таганроге' },
         { property: 'og:description', content: 'Подключение интернета от 400 руб/мес. Скорость до 200 Мбит/с. Подключение за 1 день.' },
         { property: 'og:image', content: '/images/og-image.png' },
         { property: 'og:locale', content: 'ru_RU' },
         // Twitter Card
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'PG19 — Интернет в Таганроге' },
+        { name: 'twitter:title', content: 'PG19 - Интернет в Таганроге' },
         { name: 'twitter:description', content: 'Подключение интернета от 400 руб/мес' },
       ],
       link: [

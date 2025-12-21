@@ -32,7 +32,7 @@ export const companyInfo: CompanyInfo = {
   telegram: '@PG19CONNECTBOT',
   telegramUrl: 'https://t.me/PG19CONNECTBOT',
   address: 'г. Таганрог, ул. Большая Бульварная, 11',
-  workingHours: '8:00 — 20:00',
+  workingHours: '8:00 - 20:00',
   workingDays: 'Пн-Пт',
   email: 'a@pg19.ru',
   website: 'https://taganrog.pg19.ru',

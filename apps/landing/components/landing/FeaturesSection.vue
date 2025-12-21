@@ -14,7 +14,7 @@
           Что в трюме корабля
         </h2>
         <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-          YouTube, Discord, Telegram — всё на полных парусах. Никаких рифов и блокировок на пути.
+          YouTube, Discord, Telegram - всё на полных парусах. Никаких рифов и блокировок на пути.
         </p>
       </div>
 
@@ -55,7 +55,7 @@
           <div class="text-4xl font-bold text-gray-900 mb-1">0</div>
           <div class="text-gray-600 font-medium">Рифов на пути</div>
           <p class="mt-3 text-sm text-gray-500">
-            YouTube, Discord, Telegram — чистая вода!
+            YouTube, Discord, Telegram - чистая вода!
           </p>
         </div>
 
@@ -84,7 +84,7 @@
             </div>
             <div>
               <div class="font-semibold text-white">Снаряжение для команды</div>
-              <div class="text-sm text-gray-400">Wi-Fi роутер или ТВ приставка — всего +99 дублонов/мес</div>
+              <div class="text-sm text-gray-400">Wi-Fi роутер или ТВ приставка - всего +99 дублонов/мес</div>
             </div>
           </div>
           <a
