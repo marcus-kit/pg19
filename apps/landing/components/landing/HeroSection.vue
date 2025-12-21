@@ -66,21 +66,6 @@
             </div>
           </div>
 
-          <!-- CTA Buttons (mobile) -->
-          <div class="flex flex-col sm:flex-row gap-4 lg:hidden">
-            <a
-              href="#tariffs"
-              class="flex-1 py-4 px-6 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold rounded-xl transition-all shadow-lg shadow-amber-500/25 text-center"
-            >
-              🏴‍☠️ На абордаж!
-            </a>
-            <a
-              :href="`tel:${companyInfo.phone}`"
-              class="flex-1 py-4 px-6 bg-white/10 hover:bg-white/20 backdrop-blur text-white font-semibold rounded-xl transition-all border border-white/20 text-center"
-            >
-              {{ companyInfo.phoneFormatted }}
-            </a>
-          </div>
         </div>
 
         <!-- Address Check Form Card -->
@@ -90,12 +75,12 @@
             <div class="absolute -inset-1 bg-gradient-to-r from-secondary-500/50 to-primary-500/50 rounded-3xl blur-xl opacity-50" />
 
             <div class="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 border border-amber-200/50">
-              <div class="flex items-center gap-3 mb-6">
-                <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30 text-2xl">
+              <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 flex-shrink-0 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30 text-2xl">
                   🧭
                 </div>
-                <p class="text-lg text-gray-800">
-                  <strong>Проложи курс — проверь, доходит ли сигнал до твоего порта!</strong>
+                <p class="text-base sm:text-lg text-gray-800">
+                  <strong>Проложи курс - проверь, доходит ли сигнал до твоего порта!</strong>
                 </p>
               </div>
 
