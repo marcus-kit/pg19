@@ -137,41 +137,46 @@
 
     <!-- Two Column Layout for Desktop -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Recent Transactions -->
-      <BaseCard title="Последние операции">
-        <template #header-actions>
-          <NuxtLink to="/transactions" class="text-sm text-primary-500 hover:text-primary-600 font-medium">
-            Все операции →
-          </NuxtLink>
-        </template>
+      <!-- Special Offer: PG-Ai Silver -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-6 text-white shadow-xl">
+        <!-- Background decoration -->
+        <div class="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+        <div class="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/10 blur-xl" />
 
-        <div v-if="isLoadingTransactions" class="space-y-4">
-          <div v-for="i in 3" :key="i" class="animate-pulse flex justify-between items-center">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-gray-200 rounded-full" />
-              <div class="space-y-2">
-                <div class="h-4 w-24 bg-gray-200 rounded" />
-                <div class="h-3 w-16 bg-gray-200 rounded" />
-              </div>
-            </div>
-            <div class="h-5 w-20 bg-gray-200 rounded" />
+        <!-- Badge -->
+        <div class="relative mb-4">
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+            <SparklesIcon class="h-3.5 w-3.5" />
+            Специальное предложение
+          </span>
+        </div>
+
+        <!-- Content -->
+        <div class="relative">
+          <h3 class="mb-2 text-2xl font-bold">PG-Ai Silver</h3>
+          <p class="mb-1 text-lg font-medium text-white/90">Бесплатно на 30 дней!</p>
+          <p class="mb-6 text-sm text-white/70">
+            Умный помощник для управления услугами, анализа расходов и персональных рекомендаций
+          </p>
+
+          <!-- Timer -->
+          <div class="mb-6 flex items-center gap-2 text-sm text-white/80">
+            <ClockIcon class="h-4 w-4" />
+            <span>Предложение действует до {{ endOfMonth }}</span>
           </div>
-        </div>
 
-        <div v-else-if="recentTransactions.length === 0" class="text-center py-8">
-          <HistoryIcon class="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p class="text-gray-500">Нет операций</p>
+          <!-- Button -->
+          <BaseButton
+            variant="white"
+            size="lg"
+            class="w-full sm:w-auto"
+            @click="activatePromo"
+          >
+            <SparklesIcon class="mr-2 h-5 w-5" />
+            Подключить бесплатно
+          </BaseButton>
         </div>
-
-        <div v-else class="divide-y divide-gray-100">
-          <TransactionRow
-            v-for="tx in recentTransactions"
-            :key="tx.id"
-            :transaction="tx"
-            compact
-          />
-        </div>
-      </BaseCard>
+      </div>
 
       <!-- Unpaid Invoices -->
       <BaseCard title="Счета к оплате">
@@ -264,12 +269,11 @@ import {
   BaseAlert,
   BalanceDisplay,
   StatusBadge,
-  TransactionRow,
   formatDate,
   formatMoney
 } from '@pg19/ui';
 import { useAuthStore } from '~/stores/auth';
-import type { Transaction, Subscription, Invoice, Service } from '@pg19/types';
+import type { Subscription, Invoice, Service } from '@pg19/types';
 
 // Icons
 import WalletIcon from '~/components/icons/WalletIcon.vue';
@@ -278,9 +282,9 @@ import WifiOffIcon from '~/components/icons/WifiOffIcon.vue';
 import CalendarIcon from '~/components/icons/CalendarIcon.vue';
 import ClockIcon from '~/components/icons/ClockIcon.vue';
 import ExclamationIcon from '~/components/icons/ExclamationIcon.vue';
-import HistoryIcon from '~/components/icons/HistoryIcon.vue';
 import CheckCircleIcon from '~/components/icons/CheckCircleIcon.vue';
 import CreditCardIcon from '~/components/icons/CreditCardIcon.vue';
+import SparklesIcon from '~/components/icons/SparklesIcon.vue';
 import QuickActionCard from '~/components/dashboard/QuickActionCard.vue';
 
 definePageMeta({
@@ -291,10 +295,8 @@ const authStore = useAuthStore();
 const api = useApi();
 
 // Data
-const recentTransactions = ref<Transaction[]>([]);
 const currentSubscription = ref<Subscription | null>(null);
 const unpaidInvoices = ref<Invoice[]>([]);
-const isLoadingTransactions = ref(true);
 const isLoadingInvoices = ref(true);
 const openTicketsCount = ref(0);
 const hasAutopay = ref(false);
@@ -388,10 +390,24 @@ const overdueAmount = computed(() => {
     .reduce((sum, inv) => sum + inv.amount, 0);
 });
 
+const endOfMonth = computed(() => {
+  const now = new Date();
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+  }).format(lastDay);
+});
+
 // Methods
 function isOverdue(invoice: Invoice): boolean {
   if (!invoice.due_date) return false;
   return new Date(invoice.due_date) < new Date();
+}
+
+function activatePromo() {
+  // TODO: Activate PG-Ai Silver promo via API
+  alert('Поздравляем! Подписка PG-Ai Silver активирована на 30 дней бесплатно.');
 }
 
 // Load data
@@ -400,21 +416,6 @@ onMounted(async () => {
   if (accountIds.length === 0) return;
 
   const primaryAccountId = primaryAccount.value?.id;
-
-  try {
-    // Load transactions
-    if (primaryAccountId) {
-      const txData = await api.getTransactions({
-        filter: { account_id: { _eq: primaryAccountId } },
-        limit: 5,
-      });
-      recentTransactions.value = txData;
-    }
-  } catch (e) {
-    console.error('Failed to load transactions:', e);
-  } finally {
-    isLoadingTransactions.value = false;
-  }
 
   try {
     // Load subscriptions
