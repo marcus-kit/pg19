@@ -59,7 +59,7 @@
     <button
       type="submit"
       :disabled="isLoading"
-      class="w-full py-4 px-6 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+      class="w-full py-4 px-6 bg-amber-500 hover:bg-amber-400 disabled:bg-amber-300 text-slate-900 font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
     >
       <svg
         v-if="isLoading"
@@ -81,7 +81,7 @@
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         />
       </svg>
-      {{ isLoading ? 'Проверяем...' : 'Проверить доступность' }}
+      {{ isLoading ? 'Проверяем...' : '⚓ Отдать швартовы!' }}
     </button>
   </form>
 </template>

@@ -89,26 +89,17 @@
             <!-- Glow effect -->
             <div class="absolute -inset-1 bg-gradient-to-r from-secondary-500/50 to-primary-500/50 rounded-3xl blur-xl opacity-50" />
 
-            <div class="relative bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 border border-amber-200/50">
+            <div class="relative bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-6 sm:p-8 border border-amber-200/50">
               <div class="flex items-center gap-3 mb-6">
                 <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30 text-2xl">
                   🧭
                 </div>
-                <div>
-                  <h2 class="text-xl font-bold text-gray-900">
-                    Проложи курс
-                  </h2>
-                  <p class="text-sm text-gray-500">
-                    Проверь, доходит ли сигнал до твоего порта
-                  </p>
-                </div>
+                <p class="text-lg text-gray-800">
+                  <strong>Проложи курс — проверь, доходит ли сигнал до твоего порта!</strong>
+                </p>
               </div>
 
               <AddressCheckForm @submit="handleAddressCheck" />
-
-              <p class="mt-4 text-xs text-gray-400 text-center">
-                ⚓ Бесплатный выезд капитана на борт
-              </p>
             </div>
           </div>
         </div>
@@ -119,7 +110,7 @@
     <div class="absolute bottom-8 left-1/2 -translate-x-1/2">
       <a
         href="#features"
-        class="flex flex-col items-center gap-2 text-white/40 hover:text-white/60 transition-colors"
+        class="flex flex-col items-center gap-2 text-white/20 hover:text-white/40 transition-colors"
       >
         <span class="text-xs uppercase tracking-wider">Подробнее</span>
         <div class="w-6 h-10 border-2 border-current rounded-full flex justify-center pt-2">
