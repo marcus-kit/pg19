@@ -6,10 +6,12 @@
   "scripts": {
     "dev:client": "pnpm --filter client-portal dev",
     "dev:admin": "pnpm --filter admin-panel dev",
+    "dev:landing": "pnpm --filter landing dev",
     "dev": "pnpm run --parallel dev:client dev:admin",
     "build:client": "pnpm --filter client-portal build",
     "build:admin": "pnpm --filter admin-panel build",
-    "build": "pnpm run --parallel build:client build:admin",
+    "build:landing": "pnpm --filter landing build",
+    "build": "pnpm run --parallel build:client build:admin build:landing",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck"
   },
