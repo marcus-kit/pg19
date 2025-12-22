@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { findPersonByField, normalizePhone } from '~/server/utils/directus';
+import { getCustomerByPhone, normalizePhone } from '~/server/utils/customerApi';
 import { createPhoneSession, generateSessionId } from '~/server/utils/authSessions';
 
 const bodySchema = z.object({
@@ -52,33 +52,18 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // Find person by phone
-    // Try multiple formats since phone might be stored differently
-    let person = await findPersonByField('phone', '+' + phone, config);
+    // Find person by phone via RabbitMQ
+    // Phone normalization is handled by customer-api-worker
+    const authData = await getCustomerByPhone(phone, config);
 
-    if (!person) {
-      person = await findPersonByField('phone', phone, config);
-    }
-
-    if (!person) {
-      // Try with 8 prefix
-      person = await findPersonByField('phone', '8' + phone.slice(1), config);
-    }
-
-    if (!person) {
-      // Try formatted
-      const formatted = `+7 (${phone.slice(1, 4)}) ${phone.slice(4, 7)}-${phone.slice(7, 9)}-${phone.slice(9)}`;
-      person = await findPersonByField('phone', formatted, config);
-    }
-
-    if (!person) {
+    if (!authData) {
       throw createError({
         statusCode: 404,
         message: 'Пользователь с таким номером телефона не найден',
       });
     }
 
-    if (person.status === 'terminated') {
+    if (authData.person.status === 'terminated') {
       throw createError({
         statusCode: 403,
         message: 'Аккаунт деактивирован',
@@ -89,7 +74,7 @@ export default defineEventHandler(async (event) => {
     const sessionId = generateSessionId();
 
     // Store session
-    createPhoneSession(sessionId, phone, person.id);
+    createPhoneSession(sessionId, phone, authData.person.id);
 
     return {
       data: {

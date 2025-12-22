@@ -312,9 +312,11 @@ async function processPayment() {
 // Load invoice if specified in URL
 onMounted(async () => {
   const invoiceId = route.query.invoice as string;
-  if (invoiceId) {
+  const primaryAccountId = authStore.primaryAccount?.id;
+
+  if (invoiceId && primaryAccountId) {
     try {
-      const invoice = await api.getInvoice(invoiceId);
+      const invoice = await api.getInvoice(primaryAccountId, invoiceId);
       selectedInvoice.value = invoice;
       amount.value = invoice.amount;
       amountInput.value = (invoice.amount / 100).toString();

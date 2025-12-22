@@ -569,16 +569,20 @@ async function loadInvoices() {
   isLoading.value = true;
 
   try {
-    const result = await api.getInvoices({
-      filter: {
-        account_id: { _in: accountIds },
-        // Filter by year based on date_created
-      },
-      sort: ['-date_created'],
-      limit: 100,
-    });
+    // Load invoices for all accounts
+    const allInvoices: Invoice[] = [];
+    for (const accountId of accountIds) {
+      const { data } = await api.getInvoices(accountId, {
+        year: selectedYear.value,
+        limit: 100,
+      });
+      allInvoices.push(...data);
+    }
 
-    invoices.value = result as unknown as Invoice[];
+    // Sort by date
+    invoices.value = allInvoices.sort((a, b) =>
+      new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
+    );
   } catch (e) {
     console.error('Failed to load invoices:', e);
   } finally {

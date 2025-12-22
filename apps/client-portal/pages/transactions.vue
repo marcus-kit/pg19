@@ -384,34 +384,31 @@ async function loadTransactions() {
   isLoading.value = true;
 
   try {
-    const queryFilter: Record<string, unknown> = {
-      account_id: { _eq: accountId },
-    };
+    const result = await api.getTransactions(accountId, {
+      limit: perPage,
+      offset: (currentPage.value - 1) * perPage,
+    });
+
+    // Client-side filtering (worker supports limited filters)
+    let filtered = result.data;
 
     if (filter.type) {
-      queryFilter.type = { _eq: filter.type };
+      filtered = filtered.filter(t => t.type === filter.type);
     }
 
     if (filter.startDate) {
-      queryFilter.date_created = { ...queryFilter.date_created as object, _gte: filter.startDate };
+      const startDate = new Date(filter.startDate);
+      filtered = filtered.filter(t => new Date(t.date_created) >= startDate);
     }
 
     if (filter.endDate) {
       const endDate = new Date(filter.endDate);
       endDate.setDate(endDate.getDate() + 1);
-      queryFilter.date_created = { ...queryFilter.date_created as object, _lt: endDate.toISOString().split('T')[0] };
+      filtered = filtered.filter(t => new Date(t.date_created) < endDate);
     }
 
-    const result = await api.getTransactions({
-      filter: queryFilter,
-      limit: perPage,
-      offset: (currentPage.value - 1) * perPage,
-    });
-
-    transactions.value = result as Transaction[];
-    total.value = transactions.value.length < perPage
-      ? (currentPage.value - 1) * perPage + transactions.value.length
-      : currentPage.value * perPage + 1;
+    transactions.value = filtered;
+    total.value = result.meta.total;
   } catch (e) {
     console.error('Failed to load transactions:', e);
   } finally {

@@ -1,5 +1,3 @@
-import { coveredStreets } from '~/data/coverage';
-
 export interface AddressData {
   city: string;
   street: string;
@@ -8,7 +6,14 @@ export interface AddressData {
 
 export interface AddressCheckResult {
   available: boolean;
+  need_manual_check: boolean;
   address: AddressData;
+  message: string;
+}
+
+interface ApiResponse {
+  available: boolean;
+  need_manual_check: boolean;
   message: string;
 }
 
@@ -16,32 +21,47 @@ export function useAddressCheck() {
   const isLoading = ref(false);
   const result = ref<AddressCheckResult | null>(null);
   const showModal = ref(false);
+  const config = useRuntimeConfig();
 
   async function checkAddress(address: AddressData): Promise<AddressCheckResult> {
     isLoading.value = true;
     result.value = null;
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Вызов внешнего API (rabbitmq-proxy)
+      const apiUrl = config.public.mqApiUrl || 'https://mq.dokasteel.ru';
+      const response = await $fetch<ApiResponse>(`${apiUrl}/api/check-address`, {
+        method: 'POST',
+        body: address,
+      });
 
-    // Mock logic: check if street contains any covered street name
-    const isAvailable = coveredStreets.some((street) =>
-      address.street.toLowerCase().includes(street.toLowerCase())
-    );
+      const checkResult: AddressCheckResult = {
+        available: response.available,
+        need_manual_check: response.need_manual_check,
+        address,
+        message: response.message,
+      };
 
-    const checkResult: AddressCheckResult = {
-      available: isAvailable,
-      address,
-      message: isAvailable
-        ? 'Поздравляем! Подключение по вашему адресу доступно.'
-        : 'К сожалению, ваш адрес пока не в зоне покрытия. Оставьте заявку, и мы свяжемся с вами.',
-    };
+      result.value = checkResult;
+      showModal.value = true;
 
-    result.value = checkResult;
-    isLoading.value = false;
-    showModal.value = true;
+      return checkResult;
+    } catch (error) {
+      // Fallback при ошибке сети/сервера
+      const checkResult: AddressCheckResult = {
+        available: false,
+        need_manual_check: true,
+        address,
+        message: 'Произошла ошибка при проверке адреса. Пожалуйста, оставьте заявку.',
+      };
 
-    return checkResult;
+      result.value = checkResult;
+      showModal.value = true;
+
+      return checkResult;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   function closeModal() {

@@ -474,15 +474,11 @@ onMounted(async () => {
   try {
     const [services, subscriptions] = await Promise.all([
       api.getServices(),
-      accountId ? api.getSubscriptions({
-        filter: { account_id: { _eq: accountId }, status: { _eq: 'active' } },
-        fields: ['*', 'service_id.*'],
-        limit: 1,
-      }) : Promise.resolve([]),
+      accountId ? api.getSubscriptions(accountId) : Promise.resolve([]),
     ]);
 
-    availableServices.value = services as Service[];
-    currentSubscription.value = (subscriptions as Subscription[])[0] || null;
+    availableServices.value = services;
+    currentSubscription.value = subscriptions.find(s => s.status === 'active') || null;
   } catch (e) {
     console.error('Failed to load services:', e);
   } finally {

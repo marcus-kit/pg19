@@ -9,7 +9,7 @@ import {
   getTelegramSession,
   verifyTelegramSession,
 } from '~/server/utils/authSessions';
-import { findPersonByField, getPersonAuthData } from '~/server/utils/directus';
+import { getCustomerByTelegram } from '~/server/utils/customerApi';
 
 const bodySchema = z.object({
   session_id: z.string().uuid(),
@@ -90,30 +90,20 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Find person by telegram_id
-    const person = await findPersonByField('telegram_id', telegram_id, config);
+    // Find person by telegram_id via RabbitMQ
+    const authData = await getCustomerByTelegram(telegram_id, config);
 
-    if (!person) {
+    if (!authData) {
       throw createError({
         statusCode: 404,
         message: 'Telegram не привязан к аккаунту',
       });
     }
 
-    if (person.status === 'terminated') {
+    if (authData.person.status === 'terminated') {
       throw createError({
         statusCode: 403,
         message: 'Аккаунт деактивирован',
-      });
-    }
-
-    // Get full auth data
-    const authData = await getPersonAuthData(person.id, config);
-
-    if (!authData) {
-      throw createError({
-        statusCode: 404,
-        message: 'Данные пользователя не найдены',
       });
     }
 

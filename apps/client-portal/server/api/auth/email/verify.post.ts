@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { getPersonAuthData } from '~/server/utils/directus';
+import { getCustomerAuthData } from '~/server/utils/customerApi';
 import {
   getEmailSession,
   incrementEmailAttempts,
@@ -65,8 +65,8 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Get auth data
-    const authData = await getPersonAuthData(session.personId, config);
+    // Get auth data via RabbitMQ
+    const authData = await getCustomerAuthData(session.personId, config);
 
     if (!authData) {
       throw createError({

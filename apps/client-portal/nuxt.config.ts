@@ -21,7 +21,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // Private keys (only available server-side)
-    directusApiToken: process.env.DIRECTUS_API_TOKEN || '',
+
+    // RabbitMQ (message queue for customer API)
+    rabbitmqProxyUrl: process.env.RABBITMQ_PROXY_URL || '',
 
     // Phone Auth (Asterisk)
     asteriskAmiHost: process.env.ASTERISK_AMI_HOST || '',
@@ -45,7 +47,6 @@ export default defineNuxtConfig({
     telegramWebhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || '',
 
     public: {
-      directusUrl: process.env.NUXT_PUBLIC_DIRECTUS_URL || 'https://visp.dokasteel.ru/',
       appName: process.env.NUXT_PUBLIC_APP_NAME || 'Личный кабинет PG19',
       asteriskVerifyNumber: process.env.ASTERISK_VERIFY_NUMBER || '+78634431431',
       telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || '',

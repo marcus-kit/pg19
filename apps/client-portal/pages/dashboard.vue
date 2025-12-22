@@ -418,32 +418,28 @@ onMounted(async () => {
   const primaryAccountId = primaryAccount.value?.id;
 
   try {
-    // Load subscriptions
-    const subscriptionsData = await api.getSubscriptions({
-      filter: {
-        account_id: { _in: accountIds },
-        status: { _eq: 'active' }
-      },
-      fields: ['*', 'service_id.*'],
-    });
+    // Load subscriptions for all accounts
+    const allSubscriptions: Subscription[] = [];
+    for (const accountId of accountIds) {
+      const subs = await api.getSubscriptions(accountId);
+      allSubscriptions.push(...subs.filter(s => s.status === 'active'));
+    }
 
-    currentSubscription.value = subscriptionsData.find(
+    currentSubscription.value = allSubscriptions.find(
       s => s.account_id === primaryAccountId
-    ) || subscriptionsData[0] || null;
+    ) ?? allSubscriptions[0] ?? null;
   } catch (e) {
     console.error('Failed to load subscriptions:', e);
   }
 
   try {
-    // Load invoices
-    const invoicesData = await api.getInvoices({
-      filter: {
-        account_id: { _in: accountIds },
-        status: { _in: ['issued', 'overdue'] }
-      },
-      limit: 5,
-    });
-    unpaidInvoices.value = invoicesData;
+    // Load invoices for all accounts
+    const allInvoices: typeof unpaidInvoices.value = [];
+    for (const accountId of accountIds) {
+      const { data } = await api.getInvoices(accountId, { limit: 5 });
+      allInvoices.push(...data.filter(inv => inv.status === 'issued' || inv.status === 'overdue'));
+    }
+    unpaidInvoices.value = allInvoices.slice(0, 5);
   } catch (e) {
     console.error('Failed to load invoices:', e);
   } finally {
