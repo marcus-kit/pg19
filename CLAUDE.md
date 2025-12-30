@@ -160,7 +160,59 @@ Bot webhook is handled by Edge Function `telegram-bot-webhook`:
 
 ## Deployment
 
-### Vercel Projects
+### Self-Hosted (Primary - doka.team)
+
+Applications are deployed via Docker on a self-hosted server accessible through Cloudflare Tunnel.
+
+**Live URLs:**
+| App | URL | Port |
+|-----|-----|------|
+| Client Portal | https://client.doka.team | 3010 |
+| Admin Panel | https://admin.doka.team | 3011 |
+| Landing | https://land.doka.team | 3012 |
+| Coolify Dashboard | https://doka.team | 8088 |
+
+**Server Access:**
+```bash
+# SSH via Cloudflare Tunnel (requires cloudflared installed)
+ssh doka-server
+
+# Or manually:
+ssh -o ProxyCommand="cloudflared access ssh --hostname %h" vv@ssh.dokasteel.ru
+```
+
+**Manual Deployment:**
+```bash
+ssh doka-server
+cd /opt/pg19
+sudo git pull origin dev
+sudo docker compose build client-portal admin-panel landing
+sudo docker compose up -d --force-recreate
+```
+
+**Docker Configuration:**
+- `Dockerfile` - Universal Dockerfile with `APP_NAME` build arg
+- `docker-compose.yml` - All services with port mappings
+- `.env` on server (`/opt/pg19/.env`) - Contains Supabase credentials for build
+
+**Cloudflare Tunnel Configuration:**
+- Tunnel config: `/etc/cloudflared/doka-team.yml`
+- Service: `cloudflared-doka-team.service`
+- Domain: `doka.team` (separate Cloudflare account from `dokasteel.ru`)
+
+### GitHub Actions Auto-Deploy
+
+Workflow: `.github/workflows/deploy.yml`
+
+**Triggers:**
+- Push to `dev` or `main` branches
+- Changes in `apps/`, `packages/`, `Dockerfile`, or `docker-compose.yml`
+- Manual trigger via "Run workflow"
+
+**Required Secret:**
+- `SSH_PRIVATE_KEY` - Ed25519 private key for server access
+
+### Vercel (Legacy/Alternative)
 - `pg19-client` - Client portal (apps/client-portal/)
 - `pg19-admin` - Admin panel (apps/admin-panel/)
 - `pg19-land` - Landing page (apps/landing/)
