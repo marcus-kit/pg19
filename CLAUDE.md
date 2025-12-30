@@ -217,6 +217,12 @@ sudo docker compose up -d --force-recreate
 - `docker-compose.yml` - Traefik + production services with labels
 - `.env` on server (`/opt/pg19/.env`) - Contains Supabase credentials
 
+**Healthcheck Notes:**
+- All containers have healthchecks that Traefik uses to determine routing eligibility
+- Use `127.0.0.1` instead of `localhost` in healthchecks (Alpine Linux DNS resolution issue)
+- `start_period: 60s` - Nuxt apps need time to start in production mode
+- Traefik filters out containers with "unhealthy" or "starting" status
+
 ### Cloudflare Configuration
 
 **DNS Records (Cloudflare):**
