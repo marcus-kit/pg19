@@ -20,7 +20,6 @@ pg19/
 │   ├── @pg19/types/      # Shared TypeScript types
 │   └── @pg19/ui/         # Shared Vue components
 ├── supabase/functions/   # Edge Functions (Deno runtime)
-├── telegram-bot/         # Vercel serverless Telegram bot
 └── scripts/              # Utility scripts (CSV import, etc.)
 ```
 
@@ -90,9 +89,12 @@ npx tsx import-csv-to-supabase.ts /path/to/data.csv
   - `contract-auth` - Auth by contract number + full name
   - `phone-auth-init` - Initiate phone call verification
   - `phone-auth-verify` - Check phone verification status
-  - `email-auth-send` - Send email verification code
+  - `email-auth-send` - Send email verification code (Gmail SMTP)
   - `email-auth-verify` - Verify email code
-  - `telegram-auth` - Telegram bot deep link authentication
+  - `telegram-auth` - Legacy Telegram auth (deprecated)
+  - `telegram-auth-init` - Create session with deep link URL
+  - `telegram-auth-check` - Poll session verification status
+  - `telegram-bot-webhook` - Handle Telegram bot commands (/start auth_{sessionId})
 
 - **Key architectural decisions**:
   - All IDs use `BIGINT` (not UUID) for performance
@@ -137,10 +139,11 @@ All frontends are **Nuxt 3** applications with:
 
 ### Telegram Bot
 
-Serverless bot deployed to Vercel at `/telegram-bot/`:
-- Webhook endpoint: `/api/webhook`
+Bot webhook is handled by Edge Function `telegram-bot-webhook`:
+- Webhook URL: `https://{supabase-url}/functions/v1/telegram-bot-webhook`
 - Handles `/start auth_{sessionId}` for deep link authentication
-- Verifies Telegram ID against database, marks session as verified
+- Verifies Telegram ID against `users.telegram_id`, marks session as verified
+- Bot username configured via `TELEGRAM_BOT_USERNAME` secret
 
 ## Authentication Flow
 
@@ -158,10 +161,9 @@ Serverless bot deployed to Vercel at `/telegram-bot/`:
 ## Deployment
 
 ### Vercel Projects
-- `pg19-client` - Client portal (client-portal/)
-- `pg19-admin` - Admin panel (admin-panel/)
-- `pg19-land` - Landing page (landing/)
-- `telegram-bot` - Telegram bot (telegram-bot/)
+- `pg19-client` - Client portal (apps/client-portal/)
+- `pg19-admin` - Admin panel (apps/admin-panel/)
+- `pg19-land` - Landing page (apps/landing/)
 
 ### Required Environment Variables
 
@@ -171,17 +173,13 @@ Serverless bot deployed to Vercel at `/telegram-bot/`:
 - `NUXT_PUBLIC_ASTERISK_VERIFY_NUMBER` (phone to display for verification)
 - `NUXT_PUBLIC_TELEGRAM_BOT_USERNAME` (without @)
 
-**Telegram Bot**:
-- `TELEGRAM_BOT_TOKEN`
-- `SUPABASE_URL`
+**Supabase Edge Functions** (set via Supabase dashboard or MCP):
 - `SUPABASE_SERVICE_ROLE_KEY`
-
-**Supabase Edge Functions** (set via Supabase dashboard):
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `ASTERISK_WEBHOOK_URL` (optional, for triggering calls)
-- `SMTP_WEBHOOK_URL` (optional, for sending emails)
-- `TELEGRAM_BOT_TOKEN` (for telegram-auth function)
-- `ASTERISK_VERIFY_NUMBER` (returned to client for display)
+- `TELEGRAM_BOT_TOKEN` - Telegram bot token
+- `TELEGRAM_BOT_USERNAME` - Bot username without @ (e.g., PG19CONNECTBOT)
+- `SMTP_USER` - Gmail address for sending codes
+- `SMTP_PASS` - Gmail App Password (not regular password)
+- `ASTERISK_WEBHOOK_URL` (optional, for triggering phone calls)
 
 ### Git Workflow
 
