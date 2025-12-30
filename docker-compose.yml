@@ -5,6 +5,10 @@ services:
       dockerfile: Dockerfile
       args:
         APP_NAME: client-portal
+        NUXT_PUBLIC_SUPABASE_URL: ${NUXT_PUBLIC_SUPABASE_URL}
+        NUXT_PUBLIC_SUPABASE_ANON_KEY: ${NUXT_PUBLIC_SUPABASE_ANON_KEY}
+        NUXT_PUBLIC_ASTERISK_VERIFY_NUMBER: ${NUXT_PUBLIC_ASTERISK_VERIFY_NUMBER}
+        NUXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${NUXT_PUBLIC_TELEGRAM_BOT_USERNAME}
     container_name: pg19-client
     restart: unless-stopped
     ports:
@@ -18,6 +22,8 @@ services:
       dockerfile: Dockerfile
       args:
         APP_NAME: admin-panel
+        NUXT_PUBLIC_SUPABASE_URL: ${NUXT_PUBLIC_SUPABASE_URL}
+        NUXT_PUBLIC_SUPABASE_ANON_KEY: ${NUXT_PUBLIC_SUPABASE_ANON_KEY}
     container_name: pg19-admin
     restart: unless-stopped
     ports:
