@@ -45,7 +45,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 60s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.client.rule=Host(`client.doka.team`)"
@@ -68,7 +68,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 60s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.admin.rule=Host(`admin.doka.team`)"
@@ -89,7 +89,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 60s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.landing.rule=Host(`land.doka.team`)"
@@ -110,7 +110,7 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 60s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.landingv2.rule=Host(`landv2.doka.team`)"
