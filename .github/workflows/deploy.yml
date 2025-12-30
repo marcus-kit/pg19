@@ -56,17 +56,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build
-        run: pnpm --filter client-portal build
-
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_CLIENT }}
-          working-directory: apps/client-portal
-          vercel-args: '--prod --prebuilt'
+          vercel-args: '--prod'
 
   deploy-admin:
     name: Deploy Admin Panel
@@ -90,17 +86,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build
-        run: pnpm --filter admin-panel build
-
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-          working-directory: apps/admin-panel
-          vercel-args: '--prod --prebuilt'
+          vercel-args: '--prod'
 
   deploy-landing:
     name: Deploy Landing
@@ -124,17 +116,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build
-        run: pnpm --filter landing build
-
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_LANDING }}
-          working-directory: apps/landing
-          vercel-args: '--prod --prebuilt'
+          vercel-args: '--prod'
 
   deploy-landingv2:
     name: Deploy Landing V2
@@ -158,14 +146,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build
-        run: pnpm --filter landingv2 build
-
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_LANDINGV2 }}
-          working-directory: apps/landingv2
-          vercel-args: '--prod --prebuilt'
+          vercel-args: '--prod'
