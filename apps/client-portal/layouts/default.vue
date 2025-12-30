@@ -55,9 +55,8 @@ const userName = computed(() => {
 
 const navItems = [
   { to: '/dashboard', label: 'Главная' },
-  { to: '/payment', label: 'Оплата' },
-  { to: '/security', label: 'Безопасность' },
   { to: '/invoices', label: 'Счета' },
+  { to: '/security', label: 'Безопасность' },
   { to: '/services', label: 'Тарифы' },
   { to: '/support', label: 'Поддержка' },
   { to: '/profile', label: 'Профиль' },

@@ -52,8 +52,8 @@ const navItems = computed<NavItem[]>(() => [
     icon: HomeIcon,
   },
   {
-    to: '/payment',
-    label: 'Оплата',
+    to: '/invoices',
+    label: 'Счета',
     icon: WalletIcon,
     badge: props.unpaidInvoices,
   },

@@ -1,42 +1,7 @@
 <template>
   <div class="space-y-6">
-    <!-- Hero Balance Block -->
-    <div class="bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl p-6 text-white shadow-lg">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <p class="text-primary-100 text-sm font-medium mb-1">Баланс</p>
-          <div class="flex items-baseline gap-2">
-            <span class="text-4xl font-bold">{{ formatMoney(authStore.currentBalance) }}</span>
-          </div>
-          <div class="mt-3 flex flex-wrap gap-4 text-sm">
-            <div v-if="nextChargeDate" class="flex items-center gap-1.5">
-              <CalendarIcon class="w-4 h-4 text-primary-200" />
-              <span class="text-primary-100">Списание {{ formatDate(nextChargeDate) }}</span>
-              <span class="font-medium">{{ formatMoney(monthlyCharge) }}</span>
-            </div>
-            <div v-if="daysRemaining !== null" class="flex items-center gap-1.5">
-              <ClockIcon class="w-4 h-4 text-primary-200" />
-              <span class="text-primary-100">Хватит на</span>
-              <span class="font-medium">{{ daysRemaining }} дн.</span>
-            </div>
-          </div>
-        </div>
-        <div class="flex flex-col gap-2">
-          <NuxtLink to="/payment">
-            <BaseButton variant="white" size="lg" class="w-full md:w-auto">
-              <WalletIcon class="w-5 h-5 mr-2" />
-              Пополнить
-            </BaseButton>
-          </NuxtLink>
-          <button
-            v-if="hasAutopay"
-            class="text-xs text-primary-200 hover:text-white transition-colors text-center"
-          >
-            Автоплатёж подключён
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- Cooperative News Section -->
+    <NewsSection />
 
     <!-- Connection Status Card -->
     <BaseCard v-if="account" class="border-l-4" :class="connectionStatusBorderClass">
@@ -261,6 +226,7 @@ import CheckCircleIcon from '~/components/icons/CheckCircleIcon.vue';
 import CreditCardIcon from '~/components/icons/CreditCardIcon.vue';
 import SparklesIcon from '~/components/icons/SparklesIcon.vue';
 import QuickActionCard from '~/components/dashboard/QuickActionCard.vue';
+import NewsSection from '~/components/news/NewsSection.vue';
 
 definePageMeta({
   middleware: 'auth',
