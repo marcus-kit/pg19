@@ -296,7 +296,7 @@ pg19/
 - Client Portal: https://pg19-client.vercel.app
 - Admin Panel: https://pg19-admin.vercel.app
 - Landing: https://pg19-land.vercel.app
-- Landing V2: https://landingv2-lac.vercel.app
+- Landing V2: https://pg19-landv2.vercel.app
 
 ## Часть 8: FAQ
 

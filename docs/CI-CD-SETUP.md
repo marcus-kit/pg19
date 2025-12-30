@@ -36,7 +36,7 @@ GitHub (push to main)
 | Client Portal | pg19-client | https://pg19-client.vercel.app |
 | Admin Panel | pg19-admin | https://pg19-admin.vercel.app |
 | Landing | pg19-land | https://pg19-land.vercel.app |
-| Landing V2 | landingv2 | https://landingv2-lac.vercel.app |
+| Landing V2 | pg19-landv2 | https://pg19-landv2.vercel.app |
 
 ## Как работает деплой
 
