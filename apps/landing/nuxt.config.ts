@@ -21,7 +21,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       appName: process.env.NUXT_PUBLIC_APP_NAME || 'PG19',
-      clientPortalUrl: process.env.NUXT_PUBLIC_CLIENT_PORTAL_URL || 'https://pg19-client.vercel.app',
+      clientPortalUrl: process.env.NUXT_PUBLIC_CLIENT_PORTAL_URL || 'https://client.doka.team',
       mqApiUrl: process.env.NUXT_PUBLIC_MQ_API_URL || 'https://mq.dokasteel.ru',
     },
   },
