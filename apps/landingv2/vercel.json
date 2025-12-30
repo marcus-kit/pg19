@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd ../.. && pnpm install",
-  "buildCommand": "cd ../.. && pnpm --filter client-portal build",
+  "buildCommand": "cd ../.. && pnpm --filter landingv2 build",
   "framework": "nuxtjs"
 }
