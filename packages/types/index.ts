@@ -1,8 +1,8 @@
-// Person (Абонент)
-export interface Person {
+// User (Абонент)
+export interface User {
   id: number;
   customer_number: string;        // AB-00001
-  status: PersonStatus;
+  status: UserStatus;
   first_name: string;
   last_name: string;
   email: string | null;
@@ -20,13 +20,13 @@ export interface Person {
   contracts?: Contract[];
 }
 
-export type PersonStatus = 'active' | 'suspended' | 'terminated';
+export type UserStatus = 'active' | 'suspended' | 'terminated';
 
 // Contract (Договор)
 export interface Contract {
   id: string;                     // UUID
   contract_number: string;        // 100001
-  person_id: number | Person;
+  person_id: number | User;       // TODO: rename to user_id in future migration
   status: ContractStatus;
   start_date: string | null;
   end_date: string | null;
@@ -170,31 +170,18 @@ export interface Coverage {
 export type ConnectionType = 'ftth' | 'fttb' | 'ethernet' | 'wireless' | 'xdsl';
 export type BuildingType = 'mkd' | 'private' | 'business' | 'cottage';
 
-// Directus Schema for SDK
-export interface DirectusSchema {
-  Persons: Person[];
-  contracts: Contract[];
-  accounts: Account[];
-  services: Service[];
-  subscriptions: Subscription[];
-  transactions: Transaction[];
-  payments: Payment[];
-  invoices: Invoice[];
-  coverage: Coverage[];
-}
-
 // Auth types for client portal
 export interface ClientAuthState {
   isAuthenticated: boolean;
-  person: Person | null;
+  user: User | null;
   contract: Contract | null;
   accounts: Account[];
 }
 
 // Dashboard stats for admin panel
 export interface DashboardStats {
-  totalPersons: number;
-  activePersons: number;
+  totalUsers: number;
+  activeUsers: number;
   activeAccounts: number;
   blockedAccounts: number;
   totalPositiveBalance: number;
@@ -202,7 +189,7 @@ export interface DashboardStats {
 
 // Auth data returned on successful authentication
 export interface AuthData {
-  person: Person;
+  person: User;  // Keep as 'person' for API compatibility
   contract: Contract;
   accounts: Account[];
 }

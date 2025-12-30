@@ -1,5 +1,5 @@
 import type {
-  Person,
+  User,
   Contract,
   Account,
   Service,
@@ -23,9 +23,9 @@ export function useSupabase(client: SupabaseClient) {
   return {
     client,
 
-    // ============ Persons ============
-    async getPersons(params?: QueryParams) {
-      let query = client.from('persons').select('*, contracts(*)');
+    // ============ Users ============
+    async getUsers(params?: QueryParams) {
+      let query = client.from('users').select('*, contracts(*)');
 
       if (params?.search) {
         query = query.or(`customer_number.ilike.%${params.search}%,first_name.ilike.%${params.search}%,last_name.ilike.%${params.search}%,email.ilike.%${params.search}%,phone.ilike.%${params.search}%`);
@@ -39,9 +39,9 @@ export function useSupabase(client: SupabaseClient) {
       return data;
     },
 
-    async getPerson(id: number) {
+    async getUser(id: number) {
       const { data, error } = await client
-        .from('persons')
+        .from('users')
         .select('*, contracts(*, accounts(*))')
         .eq('id', id)
         .single();
@@ -49,9 +49,9 @@ export function useSupabase(client: SupabaseClient) {
       return data;
     },
 
-    async createPerson(data: Partial<Person>) {
+    async createUser(data: Partial<User>) {
       const { data: result, error } = await client
-        .from('persons')
+        .from('users')
         .insert(data)
         .select()
         .single();
@@ -59,9 +59,9 @@ export function useSupabase(client: SupabaseClient) {
       return result;
     },
 
-    async updatePerson(id: number, data: Partial<Person>) {
+    async updateUser(id: number, data: Partial<User>) {
       const { data: result, error } = await client
-        .from('persons')
+        .from('users')
         .update(data)
         .eq('id', id)
         .select()
@@ -70,14 +70,14 @@ export function useSupabase(client: SupabaseClient) {
       return result;
     },
 
-    async deletePerson(id: number) {
-      const { error } = await client.from('persons').delete().eq('id', id);
+    async deleteUser(id: number) {
+      const { error } = await client.from('users').delete().eq('id', id);
       if (error) throw error;
     },
 
-    async searchPersons(query: string) {
+    async searchUsers(query: string) {
       const { data, error } = await client
-        .from('persons')
+        .from('users')
         .select('*, contracts(contract_number, id)')
         .or(`customer_number.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
         .limit(20);
@@ -409,14 +409,14 @@ export function useSupabase(client: SupabaseClient) {
     // ============ Dashboard Stats ============
     async getDashboardStats(): Promise<DashboardStats> {
       const [
-        { count: totalPersons },
-        { count: activePersons },
+        { count: totalUsers },
+        { count: activeUsers },
         { count: activeAccounts },
         { count: blockedAccounts },
         { data: positiveBalances },
       ] = await Promise.all([
-        client.from('persons').select('*', { count: 'exact', head: true }),
-        client.from('persons').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        client.from('users').select('*', { count: 'exact', head: true }),
+        client.from('users').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         client.from('accounts').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         client.from('accounts').select('*', { count: 'exact', head: true }).eq('status', 'blocked'),
         client.from('accounts').select('balance').gt('balance', 0),
@@ -425,8 +425,8 @@ export function useSupabase(client: SupabaseClient) {
       const totalPositiveBalance = positiveBalances?.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 0;
 
       return {
-        totalPersons: totalPersons || 0,
-        activePersons: activePersons || 0,
+        totalUsers: totalUsers || 0,
+        activeUsers: activeUsers || 0,
         activeAccounts: activeAccounts || 0,
         blockedAccounts: blockedAccounts || 0,
         totalPositiveBalance,
