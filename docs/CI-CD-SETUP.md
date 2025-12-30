@@ -1,102 +1,145 @@
 # CI/CD Setup для PG19
 
-## Текущий статус (29.12.2024)
+## Текущий статус: РАБОТАЕТ
 
-CI/CD настроен, но требует отладки деплоя на Vercel.
+Последнее обновление: 30.12.2024
 
-## Структура проекта после рефакторинга
+## Архитектура
 
 ```
-main                    ← Основная ветка (продакшен)
-└── dev                 ← Ветка разработки
-
-apps/
-├── client-portal/      → pg19-client.vercel.app
-├── admin-panel/        → pg19-admin.vercel.app
-├── landing/            → pg19-land.vercel.app
-└── landingv2/          → landingv2.vercel.app (новый)
+GitHub (push to main)
+        │
+        ▼
+┌───────────────────┐
+│  GitHub Actions   │
+│                   │
+│  1. Type Check    │
+│        │          │
+│        ▼          │
+│  2. Deploy (x4)   │──────┐
+│     параллельно   │      │
+└───────────────────┘      │
+                           ▼
+                    ┌─────────────┐
+                    │   Vercel    │
+                    │             │
+                    │ • build     │
+                    │ • deploy    │
+                    │ • CDN       │
+                    └─────────────┘
 ```
 
-## GitHub Actions Workflow
+## Приложения и URL
 
-Файл: `.github/workflows/deploy.yml`
+| Приложение | Vercel Project | Production URL |
+|------------|----------------|----------------|
+| Client Portal | pg19-client | https://pg19-client.vercel.app |
+| Admin Panel | pg19-admin | https://pg19-admin.vercel.app |
+| Landing | pg19-land | https://pg19-land.vercel.app |
+| Landing V2 | landingv2 | https://landingv2-lac.vercel.app |
 
-### Что делает:
-1. **typecheck** — проверяет TypeScript во всех apps
-2. **deploy-*** — деплоит каждое приложение параллельно на Vercel
+## Как работает деплой
 
-### Триггеры:
-- Push в `main` — полный деплой
-- Pull Request в `main` — только typecheck
+### Триггеры
+
+| Событие | Что происходит |
+|---------|----------------|
+| Push в `main` | Typecheck + Deploy всех 4 приложений |
+| Pull Request в `main` | Только Typecheck (без деплоя) |
+
+### Этапы
+
+1. **Type Check** — проверка TypeScript во всех приложениях
+2. **Deploy** — параллельный деплой 4 приложений на Vercel
+
+### Workflow файл
+
+`.github/workflows/deploy.yml`
+
+```yaml
+# Структура джобов:
+typecheck          # Проверка типов
+  │
+  ├── deploy-client     # Параллельный
+  ├── deploy-admin      # деплой
+  ├── deploy-landing    # всех
+  └── deploy-landingv2  # приложений
+```
+
+## Конфигурация Vercel для Monorepo
+
+Каждый app имеет `vercel.json`:
+
+```json
+{
+  "framework": "nuxtjs",
+  "installCommand": "cd ../.. && pnpm install",
+  "buildCommand": "pnpm build"
+}
+```
+
+Настройки проекта на Vercel:
+- `rootDirectory`: `apps/<app-name>`
+- `sourceFilesOutsideRootDirectory`: `true` (для доступа к общим пакетам)
 
 ## GitHub Secrets
 
-Добавлены в репозиторий:
-
-| Secret | Описание |
-|--------|----------|
+| Secret | Назначение |
+|--------|------------|
 | `VERCEL_TOKEN` | API токен Vercel |
-| `VERCEL_ORG_ID` | `team_WkDA5BNb1zCLVgGOvyIzAdv0` |
-| `VERCEL_PROJECT_ID_CLIENT` | `prj_lQge6N1DJKp9uJwmiH27cRFSoePC` |
-| `VERCEL_PROJECT_ID_ADMIN` | `prj_KxVu2SSHMkOIwub0NIGJKJCy6jqo` |
-| `VERCEL_PROJECT_ID_LANDING` | `prj_vzmIrzs4XZVAyg6qy5ikALT5j1DR` |
-| `VERCEL_PROJECT_ID_LANDINGV2` | `prj_Ex4YmLdzdTQGp5F03LYoUCwo90aJ` |
-
-## Vercel Project Linking
-
-Каждый app привязан к Vercel проекту через `vercel link`:
-
-```bash
-cd apps/client-portal && vercel link --project pg19-client
-cd apps/admin-panel && vercel link --project pg19-admin
-cd apps/landing && vercel link --project pg19-land
-cd apps/landingv2 && vercel link --project landingv2
-```
-
-## Известные проблемы
-
-### 1. Git author check
-**Ошибка:** `Git author must have access to the team`
-**Решение:** Используем `amondnet/vercel-action@v25` вместо Vercel CLI
-
-### 2. Output directory
-**Ошибка:** `No Output Directory named "dist" found`
-**Причина:** Nuxt билдит в `.output/`, Vercel ждёт `dist/`
-**Решение:** Дать Vercel билдить самому (не использовать `--prebuilt`)
-
-### 3. Temporary Vercel errors
-**Ошибка:** `Unexpected error. Please try again later`
-**Решение:** Перезапустить workflow: `gh run rerun <run_id> --failed`
-
-## Ручной деплой (если CI не работает)
-
-```bash
-# Деплой одного приложения
-cd apps/client-portal
-vercel --prod
-
-# Или для всех
-pnpm -r --filter "./apps/*" exec vercel --prod
-```
+| `VERCEL_ORG_ID` | ID организации Vercel |
+| `VERCEL_PROJECT_ID_CLIENT` | ID проекта client-portal |
+| `VERCEL_PROJECT_ID_ADMIN` | ID проекта admin-panel |
+| `VERCEL_PROJECT_ID_LANDING` | ID проекта landing |
+| `VERCEL_PROJECT_ID_LANDINGV2` | ID проекта landingv2 |
 
 ## Полезные команды
 
 ```bash
-# Проверить статус последнего workflow
-gh run list --limit 1
+# Статус последних workflow
+gh run list --limit 5
 
-# Посмотреть детали
+# Детали конкретного запуска
 gh run view <run_id>
 
-# Перезапустить failed jobs
+# Логи ошибок
+gh run view <run_id> --log-failed
+
+# Перезапуск упавших джобов
 gh run rerun <run_id> --failed
 
-# Посмотреть логи ошибок
-gh run view <run_id> --log-failed
+# Запуск workflow вручную (если настроен workflow_dispatch)
+gh workflow run deploy.yml
 ```
 
-## Следующие шаги
+## Решённые проблемы
 
-1. [ ] Отладить деплой (возможно временная проблема Vercel API)
-2. [ ] Настроить branch protection для main
-3. [ ] Добавить preview deployments для PR
+### 1. Git author access denied
+**Ошибка:** `Git author must have access to the team`
+**Решение:** Используем `amondnet/vercel-action@v25` вместо прямого Vercel CLI
+
+### 2. Monorepo build
+**Ошибка:** `cd ../.. && pnpm install` не работает
+**Решение:** Включить `sourceFilesOutsideRootDirectory: true` в настройках проекта Vercel
+
+### 3. Output directory
+**Ошибка:** `No Output Directory named "dist" found`
+**Решение:** Не использовать `--prebuilt`, дать Vercel билдить самому
+
+## Добавление нового приложения
+
+1. Создать приложение в `apps/new-app/`
+2. Добавить `vercel.json`:
+   ```json
+   {
+     "framework": "nuxtjs",
+     "installCommand": "cd ../.. && pnpm install",
+     "buildCommand": "pnpm build"
+   }
+   ```
+3. Создать проект на Vercel: `vercel link`
+4. Настроить на Vercel:
+   - Root Directory: `apps/new-app`
+   - Source Files Outside Root Directory: ON
+5. Добавить secret в GitHub: `VERCEL_PROJECT_ID_NEWAPP`
+6. Добавить job в `.github/workflows/deploy.yml`
