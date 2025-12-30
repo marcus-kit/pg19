@@ -24,9 +24,9 @@ export type UserStatus = 'active' | 'suspended' | 'terminated';
 
 // Contract (Договор)
 export interface Contract {
-  id: string;                     // UUID
+  id: number;
   contract_number: string;        // 100001
-  person_id: number | User;       // TODO: rename to user_id in future migration
+  person_id: number | User;
   status: ContractStatus;
   start_date: string | null;
   end_date: string | null;
@@ -45,9 +45,9 @@ export type ContractStatus = 'draft' | 'active' | 'terminated';
 
 // Account (Лицевой счёт)
 export interface Account {
-  id: string;                     // UUID
+  id: number;
   account_number: string;         // ЛС-00000001
-  contract_id: string | Contract;
+  contract_id: number | Contract;
   status: AccountStatus;
   balance: number;                // копейки
   credit_limit: number;           // копейки
@@ -87,7 +87,7 @@ export interface Service {
 // Subscription (Подписка на тариф)
 export interface Subscription {
   id: number;
-  account_id: string;
+  account_id: number;
   service_id: number | Service;
   status: SubscriptionStatus;
   started_at: string;
@@ -103,14 +103,14 @@ export type SubscriptionStatus = 'active' | 'paused' | 'cancelled';
 // Transaction (Транзакция)
 export interface Transaction {
   id: number;
-  account_id: string;
+  account_id: number;
   type: TransactionType;
   amount: number;                 // копейки (+ пополнение, - списание)
   balance_after: number;          // копейки
   description: string | null;
   subscription_id: number | null;
   payment_id: number | null;
-  invoice_id: string | null;
+  invoice_id: number | null;
   fiscal_receipt_id: string | null;
   fiscalized_at: string | null;
   date_created: string;
@@ -121,7 +121,7 @@ export type TransactionType = 'charge' | 'payment' | 'correction' | 'refund' | '
 // Payment (Платёж)
 export interface Payment {
   id: number;
-  account_id: string;
+  account_id: number;
   amount: number;                 // копейки
   provider: PaymentProvider;
   external_id: string | null;
@@ -138,9 +138,9 @@ export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'refunded';
 
 // Invoice (Счёт)
 export interface Invoice {
-  id: string;                     // UUID
+  id: number;
   invoice_number: string;         // СЧ-2024/00001
-  account_id: string;
+  account_id: number;
   status: InvoiceStatus;
   amount: number;                 // копейки
   description: string | null;

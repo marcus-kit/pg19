@@ -98,7 +98,7 @@ export function useSupabase(client: SupabaseClient) {
       return data;
     },
 
-    async getContract(id: string) {
+    async getContract(id: number) {
       const { data, error } = await client
         .from('contracts')
         .select('*, person_id(*), accounts(*)')
@@ -130,7 +130,7 @@ export function useSupabase(client: SupabaseClient) {
       return result;
     },
 
-    async updateContract(id: string, data: Partial<Contract>) {
+    async updateContract(id: number, data: Partial<Contract>) {
       const { data: result, error } = await client
         .from('contracts')
         .update(data)
@@ -154,7 +154,7 @@ export function useSupabase(client: SupabaseClient) {
       return data;
     },
 
-    async getAccount(id: string) {
+    async getAccount(id: number) {
       const { data, error } = await client
         .from('accounts')
         .select('*, contract_id(*, person_id(*)), subscriptions(*, service_id(*)), transactions(*), payments(*), invoices(*)')
@@ -164,7 +164,7 @@ export function useSupabase(client: SupabaseClient) {
       return data;
     },
 
-    async updateAccount(id: string, data: Partial<Account>) {
+    async updateAccount(id: number, data: Partial<Account>) {
       const { data: result, error } = await client
         .from('accounts')
         .update(data)
@@ -175,7 +175,7 @@ export function useSupabase(client: SupabaseClient) {
       return result;
     },
 
-    async getAccountTransactions(accountId: string, params?: QueryParams) {
+    async getAccountTransactions(accountId: number, params?: QueryParams) {
       let query = client
         .from('transactions')
         .select('*')
@@ -190,7 +190,7 @@ export function useSupabase(client: SupabaseClient) {
       return data;
     },
 
-    async getAccountPayments(accountId: string, params?: QueryParams) {
+    async getAccountPayments(accountId: number, params?: QueryParams) {
       let query = client
         .from('payments')
         .select('*')
@@ -205,7 +205,7 @@ export function useSupabase(client: SupabaseClient) {
       return data;
     },
 
-    async getAccountInvoices(accountId: string, params?: QueryParams) {
+    async getAccountInvoices(accountId: number, params?: QueryParams) {
       let query = client
         .from('invoices')
         .select('*')
@@ -375,7 +375,7 @@ export function useSupabase(client: SupabaseClient) {
       return data;
     },
 
-    async getInvoice(id: string) {
+    async getInvoice(id: number) {
       const { data, error } = await client
         .from('invoices')
         .select('*')
@@ -395,7 +395,7 @@ export function useSupabase(client: SupabaseClient) {
       return result;
     },
 
-    async updateInvoice(id: string, data: Partial<Invoice>) {
+    async updateInvoice(id: number, data: Partial<Invoice>) {
       const { data: result, error } = await client
         .from('invoices')
         .update(data)
