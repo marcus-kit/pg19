@@ -9,9 +9,10 @@ export default defineNuxtConfig({
   ],
 
   runtimeConfig: {
-    directusApiToken: process.env.NUXT_DIRECTUS_API_TOKEN || '',
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
     public: {
-      directusUrl: process.env.NUXT_PUBLIC_DIRECTUS_URL || 'https://visp.dokasteel.ru/',
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
       appName: process.env.NUXT_PUBLIC_APP_NAME || 'PG19 Billing Admin',
     },
   },

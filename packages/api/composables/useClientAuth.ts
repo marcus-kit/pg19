@@ -1,76 +1,117 @@
-import { readItems } from '@directus/sdk';
-import type { Person, Contract, Account, ClientAuthState } from '@pg19/types';
-import type { ApiClient } from '../index';
+import type {
+  Person,
+  Contract,
+  Account,
+  AuthData,
+  PhoneAuthInitResponse,
+  PhoneAuthCheckResponse,
+  EmailAuthSendResponse,
+  TelegramAuthData,
+} from '@pg19/types';
+import type { SupabaseClient } from '../index';
 
-export function useClientAuth(client: ApiClient) {
-  const state: ClientAuthState = {
-    isAuthenticated: false,
-    person: null,
-    contract: null,
-    accounts: []
-  };
+export function useClientAuth(supabaseUrl: string) {
+  const functionsUrl = `${supabaseUrl}/functions/v1`;
 
   return {
-    state,
+    // 1. Contract + Name authentication
+    async loginWithContract(
+      contractNumber: string,
+      firstName: string,
+      lastName: string
+    ): Promise<AuthData> {
+      const response = await fetch(`${functionsUrl}/contract-auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contractNumber, firstName, lastName }),
+      });
 
-    async login(contractNumber: string, lastName: string, firstName: string): Promise<ClientAuthState> {
-      // Поиск договора по номеру
-      const contracts = await client.request(readItems('contracts', {
-        filter: {
-          contract_number: { _eq: contractNumber },
-          status: { _eq: 'active' }
-        },
-        fields: ['*', { person_id: ['*'], accounts: ['*'] }],
-        limit: 1
-      } as any));
-
-      if (!contracts || contracts.length === 0) {
-        throw new Error('Договор не найден');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Authentication failed');
       }
 
-      const contract = contracts[0] as unknown as Contract & { person_id: Person; accounts: Account[] };
-      const person = contract.person_id as Person;
-
-      if (!person) {
-        throw new Error('Абонент не найден');
-      }
-
-      // Проверка ФИО (регистронезависимо)
-      const normalizedLastName = lastName.trim().toLowerCase();
-      const normalizedFirstName = firstName.trim().toLowerCase();
-      const personLastName = (person.last_name || '').toLowerCase();
-      const personFirstName = (person.first_name || '').toLowerCase();
-
-      if (personLastName !== normalizedLastName || personFirstName !== normalizedFirstName) {
-        throw new Error('ФИО не совпадает с данными договора');
-      }
-
-      // Проверка статуса абонента
-      if (person.status === 'terminated') {
-        throw new Error('Договор расторгнут');
-      }
-
-      state.isAuthenticated = true;
-      state.person = person;
-      state.contract = contract;
-      state.accounts = contract.accounts || [];
-
-      return state;
+      return response.json();
     },
 
-    logout() {
-      state.isAuthenticated = false;
-      state.person = null;
-      state.contract = null;
-      state.accounts = [];
+    // 2. Phone authentication - init
+    async initPhoneAuth(phone: string): Promise<PhoneAuthInitResponse> {
+      const response = await fetch(`${functionsUrl}/phone-auth-init`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to initiate phone auth');
+      }
+
+      return response.json();
     },
 
-    isAuthenticated(): boolean {
-      return state.isAuthenticated;
+    // 2. Phone authentication - verify
+    async verifyPhoneAuth(sessionId: string): Promise<PhoneAuthCheckResponse> {
+      const response = await fetch(`${functionsUrl}/phone-auth-verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to verify phone auth');
+      }
+
+      return response.json();
     },
 
-    getState(): ClientAuthState {
-      return state;
-    }
+    // 3. Email authentication - send code
+    async sendEmailCode(email: string): Promise<EmailAuthSendResponse> {
+      const response = await fetch(`${functionsUrl}/email-auth-send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send email code');
+      }
+
+      return response.json();
+    },
+
+    // 3. Email authentication - verify code
+    async verifyEmailCode(sessionId: string, code: string): Promise<AuthData> {
+      const response = await fetch(`${functionsUrl}/email-auth-verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, code }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Invalid code');
+      }
+
+      return response.json();
+    },
+
+    // 4. Telegram authentication
+    async loginWithTelegram(authData: TelegramAuthData): Promise<AuthData> {
+      const response = await fetch(`${functionsUrl}/telegram-auth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(authData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Telegram authentication failed');
+      }
+
+      return response.json();
+    },
   };
 }

@@ -1,2 +1,2 @@
-export { useDirectus } from './useDirectus';
+export { useSupabase } from './useSupabase';
 export { useClientAuth } from './useClientAuth';
