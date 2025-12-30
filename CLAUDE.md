@@ -177,7 +177,8 @@ Internet → Cloudflare Tunnel → Traefik (:80) → Docker Containers
 | Admin Panel | https://admin.doka.team |
 | Landing | https://land.doka.team |
 | Landing V2 | https://landv2.doka.team |
-| Traefik Dashboard | https://traefik.doka.team |
+| Traefik Dashboard | http://localhost:8181 (on server) |
+| Coolify Dashboard | https://doka.team |
 
 ### Preview Environments (non-main branches)
 
@@ -223,7 +224,16 @@ sudo docker compose up -d --force-recreate
 - `doka.team` → Tunnel
 
 **Tunnel config:** `/etc/cloudflared/doka-team.yml`
-- Route all traffic to `http://localhost:80` (Traefik)
+```yaml
+ingress:
+  - hostname: doka.team
+    service: http://localhost:8088  # Coolify
+  - hostname: "*.doka.team"
+    service: http://localhost:80    # Traefik
+  - service: http_status:404
+```
+
+**Tunnel service:** `cloudflared-doka-team.service`
 
 ### GitHub Actions Auto-Deploy
 
@@ -250,7 +260,7 @@ Workflow: `.github/workflows/deploy.yml`
 **Supabase Edge Functions** (set via Supabase dashboard or MCP):
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `TELEGRAM_BOT_TOKEN` - Telegram bot token
-- `TELEGRAM_BOT_USERNAME` - Bot username without @ (e.g., PG19CONNECTBOT)
+- `TELEGRAM_BOT_USERNAME` - Bot username: `PG19CONNECTBOT` (without @)
 - `SMTP_USER` - Gmail address for sending codes
 - `SMTP_PASS` - Gmail App Password (not regular password)
 - `ASTERISK_WEBHOOK_URL` (optional, for triggering phone calls)
