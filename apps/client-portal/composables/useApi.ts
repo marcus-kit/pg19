@@ -11,6 +11,8 @@ import type {
   PhoneAuthCheckResponse,
   EmailAuthSendResponse,
   TelegramAuthData,
+  News,
+  NewsAttachment,
 } from '@pg19/types';
 import { createSupabaseClient } from '@pg19/api';
 
@@ -152,6 +154,90 @@ export function useApi() {
         balance: data.balance || 0,
         creditLimit: data.credit_limit || 0,
       };
+    },
+
+    // ============ News ============
+    async getNews(userId: number, params?: { limit?: number; offset?: number }) {
+      const now = new Date().toISOString();
+
+      let query = supabase
+        .from('news')
+        .select(`
+          *,
+          attachments:news_attachments(*)
+        `)
+        .eq('status', 'published')
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .order('is_pinned', { ascending: false })
+        .order('published_at', { ascending: false });
+
+      if (params?.limit) query = query.limit(params.limit);
+      if (params?.offset) {
+        query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
+      }
+
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+
+      // Get read status for this user
+      const newsIds = (data || []).map(n => n.id);
+      const { data: readStatuses } = await supabase
+        .from('news_read_status')
+        .select('news_id')
+        .eq('user_id', userId)
+        .in('news_id', newsIds);
+
+      const readNewsIds = new Set((readStatuses || []).map(rs => rs.news_id));
+
+      return (data || []).map(item => ({
+        ...item,
+        is_read: readNewsIds.has(item.id),
+        attachments: item.attachments || [],
+      })) as News[];
+    },
+
+    async getUnreadNewsCount(userId: number) {
+      const now = new Date().toISOString();
+
+      // Get all published news IDs
+      const { data: allNews } = await supabase
+        .from('news')
+        .select('id')
+        .eq('status', 'published')
+        .or(`expires_at.is.null,expires_at.gt.${now}`);
+
+      if (!allNews || allNews.length === 0) return 0;
+
+      // Get read news IDs for this user
+      const { data: readStatuses } = await supabase
+        .from('news_read_status')
+        .select('news_id')
+        .eq('user_id', userId);
+
+      const readNewsIds = new Set((readStatuses || []).map(rs => rs.news_id));
+
+      return allNews.filter(n => !readNewsIds.has(n.id)).length;
+    },
+
+    async markNewsAsRead(newsId: number, userId: number) {
+      const { error } = await supabase
+        .from('news_read_status')
+        .upsert(
+          { news_id: newsId, user_id: userId },
+          { onConflict: 'news_id,user_id' }
+        );
+
+      if (error) throw new Error(error.message);
+      return true;
+    },
+
+    async getAttachmentUrl(filePath: string) {
+      const { data, error } = await supabase.storage
+        .from('news-attachments')
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+      if (error) throw new Error('Не удалось получить ссылку на файл');
+      return data.signedUrl;
     },
 
     // ============ Auth ============

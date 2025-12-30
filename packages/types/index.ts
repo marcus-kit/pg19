@@ -211,3 +211,41 @@ export interface TelegramAuthData {
   auth_date: number;
   hash: string;
 }
+
+// News types
+export type NewsCategory = 'announcement' | 'protocol' | 'notification';
+export type NewsStatus = 'draft' | 'published' | 'archived';
+
+export interface NewsAttachment {
+  id: number;
+  news_id: number;
+  file_name: string;
+  file_path: string;
+  file_size: number | null;
+  mime_type: string | null;
+  sort_order: number;
+  date_created: string;
+}
+
+export interface News {
+  id: number;
+  title: string;
+  summary: string | null;
+  content: string;
+  category: NewsCategory;
+  status: NewsStatus;
+  published_at: string | null;
+  expires_at: string | null;
+  is_pinned: boolean;
+  date_created: string;
+  date_updated: string;
+  attachments?: NewsAttachment[];
+  is_read?: boolean;
+}
+
+export interface NewsReadStatus {
+  id: number;
+  news_id: number;
+  user_id: number;
+  read_at: string;
+}
