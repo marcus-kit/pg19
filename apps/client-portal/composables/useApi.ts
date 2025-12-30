@@ -35,7 +35,7 @@ export function useApi() {
     },
 
     // ============ Subscriptions ============
-    async getSubscriptions(accountId: string) {
+    async getSubscriptions(accountId: number) {
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*, service_id(*)')
@@ -48,7 +48,7 @@ export function useApi() {
 
     // ============ Transactions ============
     async getTransactions(
-      accountId: string,
+      accountId: number,
       params?: { limit?: number; offset?: number; year?: number }
     ) {
       let query = supabase
@@ -80,7 +80,7 @@ export function useApi() {
       };
     },
 
-    async getAccountTransactions(accountId: string, params?: { limit?: number }) {
+    async getAccountTransactions(accountId: number, params?: { limit?: number }) {
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -94,7 +94,7 @@ export function useApi() {
 
     // ============ Invoices ============
     async getInvoices(
-      accountId: string,
+      accountId: number,
       params?: { status?: string; limit?: number; offset?: number; year?: number }
     ) {
       let query = supabase
@@ -127,7 +127,7 @@ export function useApi() {
       };
     },
 
-    async getInvoice(accountId: string, invoiceId: string) {
+    async getInvoice(accountId: number, invoiceId: number) {
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
@@ -140,7 +140,7 @@ export function useApi() {
     },
 
     // ============ Balance ============
-    async getBalance(accountId: string) {
+    async getBalance(accountId: number) {
       const { data, error } = await supabase
         .from('accounts')
         .select('balance, credit_limit')

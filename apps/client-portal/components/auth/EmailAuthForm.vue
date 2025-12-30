@@ -93,10 +93,13 @@
 
 <script setup lang="ts">
 import { BaseInput, BaseButton, BaseAlert } from '@pg19/ui';
+import type { AuthData } from '@pg19/types';
 
 const emit = defineEmits<{
-  success: [data: unknown];
+  success: [data: AuthData];
 }>();
+
+const api = useApi();
 
 const step = ref<'email' | 'code'>('email');
 const email = ref('');
@@ -165,18 +168,14 @@ async function handleSendCode() {
   error.value = '';
 
   try {
-    const response = await $fetch('/api/auth/email/send', {
-      method: 'POST',
-      body: { email: email.value.trim() },
-    });
-
-    sessionId.value = response.data.sessionId;
+    const response = await api.auth.emailSend(email.value.trim());
+    sessionId.value = response.sessionId;
     step.value = 'code';
     code.value = '';
     startResendCountdown();
   } catch (e: unknown) {
-    const err = e as { data?: { message?: string } };
-    error.value = err.data?.message || 'Ошибка отправки кода';
+    const err = e as Error;
+    error.value = err.message || 'Ошибка отправки кода';
   } finally {
     isLoading.value = false;
   }
@@ -190,18 +189,11 @@ async function handleVerifyCode() {
   codeError.value = '';
 
   try {
-    const response = await $fetch('/api/auth/email/verify', {
-      method: 'POST',
-      body: {
-        sessionId: sessionId.value,
-        code: code.value.trim(),
-      },
-    });
-
-    emit('success', response.data);
+    const authData = await api.auth.emailVerify(sessionId.value, code.value.trim());
+    emit('success', authData);
   } catch (e: unknown) {
-    const err = e as { data?: { message?: string } };
-    const message = err.data?.message || 'Ошибка проверки кода';
+    const err = e as Error;
+    const message = err.message || 'Ошибка проверки кода';
 
     // Show as field error if it's about the code
     if (message.includes('Неверный код') || message.includes('попыток')) {

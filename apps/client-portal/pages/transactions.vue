@@ -378,7 +378,7 @@ function exportTransactions() {
 }
 
 async function loadTransactions() {
-  const accountId = authStore.primaryAccount?.id;
+  const accountId = authStore.account?.id;
   if (!accountId) return;
 
   isLoading.value = true;

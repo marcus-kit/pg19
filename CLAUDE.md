@@ -14,13 +14,13 @@ pg19/
 │   ├── client-portal/    # Customer self-service portal (Nuxt 3)
 │   ├── admin-panel/      # Internal admin dashboard (Nuxt 3)
 │   ├── landing/          # Public marketing website (Nuxt 3)
-│   ├── landingv2/        # Alternative landing page
-│   └── telegram-bot/     # Vercel serverless Telegram bot
+│   └── landingv2/        # Alternative landing page
 ├── packages/
 │   ├── @pg19/api/        # Supabase client & composables
 │   ├── @pg19/types/      # Shared TypeScript types
 │   └── @pg19/ui/         # Shared Vue components
 ├── supabase/functions/   # Edge Functions (Deno runtime)
+├── telegram-bot/         # Vercel serverless Telegram bot
 └── scripts/              # Utility scripts (CSV import, etc.)
 ```
 
@@ -137,7 +137,7 @@ All frontends are **Nuxt 3** applications with:
 
 ### Telegram Bot
 
-Serverless bot deployed to Vercel at `/apps/telegram-bot/`:
+Serverless bot deployed to Vercel at `/telegram-bot/`:
 - Webhook endpoint: `/api/webhook`
 - Handles `/start auth_{sessionId}` for deep link authentication
 - Verifies Telegram ID against database, marks session as verified

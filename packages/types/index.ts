@@ -23,6 +23,9 @@ export interface User {
 
 export type UserStatus = 'active' | 'suspended' | 'terminated';
 
+// Alias for backward compatibility
+export type Person = User;
+
 // Contract (Договор)
 export interface Contract {
   id: number;

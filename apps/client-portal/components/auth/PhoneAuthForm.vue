@@ -89,12 +89,14 @@
 
 <script setup lang="ts">
 import { BaseInput, BaseButton, BaseAlert, BaseSpinner } from '@pg19/ui';
+import type { AuthData, PhoneAuthCheckResponse } from '@pg19/types';
 
 const emit = defineEmits<{
-  success: [data: unknown];
+  success: [data: AuthData];
 }>();
 
 const config = useRuntimeConfig();
+const api = useApi();
 
 const step = ref<'phone' | 'call'>('phone');
 const phone = ref('');
@@ -153,56 +155,41 @@ async function handleInitAuth() {
   error.value = '';
 
   try {
-    const response = await $fetch('/api/auth/phone/init', {
-      method: 'POST',
-      body: { phone: phone.value },
-    });
-
-    sessionId.value = response.data.sessionId;
-    verifyNumber.value = response.data.verifyNumber;
-    timeRemaining.value = response.data.expiresIn;
+    const response = await api.auth.phoneInit(phone.value);
+    sessionId.value = response.sessionId;
+    verifyNumber.value = response.verifyNumber;
+    timeRemaining.value = response.expiresIn;
     step.value = 'call';
 
     startPolling();
     startCountdown();
   } catch (e: unknown) {
-    const err = e as { data?: { message?: string } };
-    error.value = err.data?.message || 'Ошибка инициализации авторизации';
+    const err = e as Error;
+    error.value = err.message || 'Ошибка инициализации авторизации';
   } finally {
     isLoading.value = false;
   }
-}
-
-interface PhoneCheckResponse {
-  data: {
-    verified: boolean;
-    auth?: unknown;
-    message?: string;
-  };
 }
 
 async function checkCallStatus() {
   if (!sessionId.value) return;
 
   try {
-    const response = await $fetch<PhoneCheckResponse>('/api/auth/phone/check', {
-      method: 'POST',
-      body: { sessionId: sessionId.value },
-    });
+    const response = await api.auth.phoneCheck(sessionId.value);
 
-    if (response.data.verified && response.data.auth) {
+    if (response.verified && response.auth) {
       stopPolling();
-      emit('success', response.data.auth);
-    } else if (response.data.message) {
+      emit('success', response.auth);
+    } else if (response.message) {
       // Asterisk not available message
-      pollError.value = response.data.message;
+      pollError.value = response.message;
       stopPolling();
     }
   } catch (e: unknown) {
-    const err = e as { data?: { message?: string } };
+    const err = e as Error;
     // Session expired
-    if (err.data?.message?.includes('истекла')) {
-      pollError.value = err.data.message;
+    if (err.message?.includes('истекла')) {
+      pollError.value = err.message;
       stopPolling();
     }
   }

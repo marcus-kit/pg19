@@ -311,12 +311,13 @@ async function processPayment() {
 
 // Load invoice if specified in URL
 onMounted(async () => {
-  const invoiceId = route.query.invoice as string;
-  const primaryAccountId = authStore.primaryAccount?.id;
+  const invoiceIdParam = route.query.invoice as string;
+  const accountId = authStore.account?.id;
 
-  if (invoiceId && primaryAccountId) {
+  if (invoiceIdParam && accountId) {
     try {
-      const invoice = await api.getInvoice(primaryAccountId, invoiceId);
+      const invoiceId = parseInt(invoiceIdParam, 10);
+      const invoice = await api.getInvoice(accountId, invoiceId);
       selectedInvoice.value = invoice;
       amount.value = invoice.amount;
       amountInput.value = (invoice.amount / 100).toString();

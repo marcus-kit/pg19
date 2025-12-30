@@ -43,7 +43,7 @@
             </div>
             <div>
               <dd class="text-lg font-semibold text-gray-900">{{ fullName }}</dd>
-              <dt class="text-sm text-gray-500">Абонент #{{ authStore.person?.customer_number }}</dt>
+              <dt class="text-sm text-gray-500">Договор #{{ authStore.contract?.contract_number }}</dt>
             </div>
           </div>
 
@@ -119,14 +119,14 @@
             <div>
               <dd class="text-gray-900">{{ serviceAddress }}</dd>
               <div class="flex gap-4 mt-2 text-sm text-gray-500">
-                <span v-if="authStore.primaryAccount?.address_entrance">
-                  Подъезд: {{ authStore.primaryAccount.address_entrance }}
+                <span v-if="authStore.account?.address_entrance">
+                  Подъезд: {{ authStore.account.address_entrance }}
                 </span>
-                <span v-if="authStore.primaryAccount?.address_floor">
-                  Этаж: {{ authStore.primaryAccount.address_floor }}
+                <span v-if="authStore.account?.address_floor">
+                  Этаж: {{ authStore.account.address_floor }}
                 </span>
-                <span v-if="authStore.primaryAccount?.address_intercom">
-                  Домофон: {{ authStore.primaryAccount.address_intercom }}
+                <span v-if="authStore.account?.address_intercom">
+                  Домофон: {{ authStore.account.address_intercom }}
                 </span>
               </div>
             </div>
@@ -143,7 +143,7 @@
           <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div>
               <dt class="text-sm text-gray-500">Номер счёта</dt>
-              <dd class="text-lg font-semibold text-gray-900">{{ authStore.primaryAccount?.account_number }}</dd>
+              <dd class="text-lg font-semibold text-gray-900">{{ authStore.account?.account_number }}</dd>
             </div>
             <BalanceDisplay :amount="authStore.currentBalance" size="lg" />
           </div>
@@ -152,16 +152,16 @@
             <div>
               <dt class="text-sm text-gray-500">Статус</dt>
               <dd>
-                <StatusBadge :status="authStore.primaryAccount?.status || 'active'" type="account" />
+                <StatusBadge :status="authStore.account?.status || 'active'" type="account" />
               </dd>
             </div>
-            <div v-if="authStore.primaryAccount?.credit_limit">
+            <div v-if="authStore.account?.credit_limit">
               <dt class="text-sm text-gray-500">Кредитный лимит</dt>
-              <dd class="text-gray-900">{{ formatMoney(authStore.primaryAccount.credit_limit) }}</dd>
+              <dd class="text-gray-900">{{ formatMoney(authStore.account.credit_limit) }}</dd>
             </div>
-            <div v-if="authStore.primaryAccount?.next_charge_date">
+            <div v-if="authStore.account?.next_charge_date">
               <dt class="text-sm text-gray-500">Следующее списание</dt>
-              <dd class="text-gray-900">{{ formatDate(authStore.primaryAccount.next_charge_date) }}</dd>
+              <dd class="text-gray-900">{{ formatDate(authStore.account.next_charge_date) }}</dd>
             </div>
           </div>
         </dl>
@@ -394,7 +394,7 @@ const contractAddress = computed(() => {
 });
 
 const serviceAddress = computed(() => {
-  const account = authStore.primaryAccount;
+  const account = authStore.account;
   if (!account) return '';
   if (account.address_full) return account.address_full;
   return formatAddress({

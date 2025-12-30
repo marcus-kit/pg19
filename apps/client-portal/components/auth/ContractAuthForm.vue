@@ -53,7 +53,7 @@
 import { BaseInput, BaseButton, BaseAlert } from '@pg19/ui';
 
 const emit = defineEmits<{
-  success: [data: { person: unknown; contract: unknown; accounts: unknown[] }];
+  success: [data: { person: unknown; contract: unknown; account: unknown }];
 }>();
 
 const api = useApi();
@@ -104,7 +104,7 @@ async function handleSubmit() {
     emit('success', {
       person: result.person,
       contract: result.contract,
-      accounts: result.accounts,
+      account: result.account,
     });
   } catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Ошибка авторизации';

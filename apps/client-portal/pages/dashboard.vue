@@ -39,7 +39,7 @@
     </div>
 
     <!-- Connection Status Card -->
-    <BaseCard v-if="primaryAccount" class="border-l-4" :class="connectionStatusBorderClass">
+    <BaseCard v-if="account" class="border-l-4" :class="connectionStatusBorderClass">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div class="flex items-center gap-4">
           <div
@@ -234,31 +234,6 @@
         </div>
       </BaseCard>
     </div>
-
-    <!-- Account Details (if multiple accounts) -->
-    <BaseCard v-if="authStore.accounts.length > 1" title="Лицевые счета">
-      <div class="space-y-4">
-        <div
-          v-for="account in authStore.accounts"
-          :key="account.id"
-          class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-        >
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <CreditCardIcon class="w-5 h-5 text-primary-600" />
-            </div>
-            <div>
-              <p class="font-medium text-gray-900">{{ account.account_number }}</p>
-              <p v-if="account.address_full" class="text-sm text-gray-500">{{ account.address_full }}</p>
-            </div>
-          </div>
-          <div class="text-right">
-            <BalanceDisplay :amount="account.balance" size="lg" />
-            <StatusBadge :status="account.status" type="account" class="mt-1" />
-          </div>
-        </div>
-      </div>
-    </BaseCard>
   </div>
 </template>
 
@@ -302,9 +277,9 @@ const openTicketsCount = ref(0);
 const hasAutopay = ref(false);
 
 // Computed
-const primaryAccount = computed(() => authStore.primaryAccount);
+const account = computed(() => authStore.account);
 
-const nextChargeDate = computed(() => primaryAccount.value?.next_charge_date);
+const nextChargeDate = computed(() => account.value?.next_charge_date);
 
 const currentTariff = computed<Service | null>(() => {
   if (!currentSubscription.value?.service) return null;
@@ -328,12 +303,12 @@ const daysRemaining = computed(() => {
 });
 
 const isConnected = computed(() => {
-  return primaryAccount.value?.status === 'active';
+  return account.value?.status === 'active';
 });
 
 const connectionStatusText = computed(() => {
-  if (!primaryAccount.value) return 'Нет данных';
-  switch (primaryAccount.value.status) {
+  if (!account.value) return 'Нет данных';
+  switch (account.value.status) {
     case 'active': return 'Подключён';
     case 'blocked': return 'Заблокирован';
     case 'closed': return 'Закрыт';
@@ -342,29 +317,29 @@ const connectionStatusText = computed(() => {
 });
 
 const connectionStatusBorderClass = computed(() => {
-  if (!primaryAccount.value) return 'border-gray-300';
-  return primaryAccount.value.status === 'active'
+  if (!account.value) return 'border-gray-300';
+  return account.value.status === 'active'
     ? 'border-secondary-500'
     : 'border-accent-pink';
 });
 
 const connectionStatusBgClass = computed(() => {
-  if (!primaryAccount.value) return 'bg-gray-100';
-  return primaryAccount.value.status === 'active'
+  if (!account.value) return 'bg-gray-100';
+  return account.value.status === 'active'
     ? 'bg-secondary-100'
     : 'bg-red-100';
 });
 
 const connectionStatusTextClass = computed(() => {
-  if (!primaryAccount.value) return 'text-gray-500';
-  return primaryAccount.value.status === 'active'
+  if (!account.value) return 'text-gray-500';
+  return account.value.status === 'active'
     ? 'text-secondary-600'
     : 'text-red-600';
 });
 
 const connectionStatusDotClass = computed(() => {
-  if (!primaryAccount.value) return 'bg-gray-400';
-  return primaryAccount.value.status === 'active'
+  if (!account.value) return 'bg-gray-400';
+  return account.value.status === 'active'
     ? 'bg-secondary-500 animate-pulse'
     : 'bg-red-500';
 });
@@ -412,10 +387,10 @@ function activatePromo() {
 
 // Load data
 onMounted(async () => {
-  const accountIds = authStore.accounts.map(a => a.id);
+  const accountIds = authStore.account ? [authStore.account.id] : [];
   if (accountIds.length === 0) return;
 
-  const primaryAccountId = primaryAccount.value?.id;
+  const accountId = account.value?.id;
 
   try {
     // Load subscriptions for all accounts
@@ -426,7 +401,7 @@ onMounted(async () => {
     }
 
     currentSubscription.value = allSubscriptions.find(
-      s => s.account_id === primaryAccountId
+      s => s.account_id === accountId
     ) ?? allSubscriptions[0] ?? null;
   } catch (e) {
     console.error('Failed to load subscriptions:', e);

@@ -17,9 +17,6 @@ importers:
 
   apps/admin-panel:
     dependencies:
-      '@directus/sdk':
-        specifier: ^17.0.0
-        version: 17.0.2
       '@headlessui/vue':
         specifier: ^1.7.0
         version: 1.7.23(vue@3.5.26(typescript@5.9.3))
@@ -193,6 +190,19 @@ importers:
         version: 3.4.19(yaml@2.8.2)
       typescript:
         specifier: ^5.7.2
+        version: 5.9.3
+
+  apps/telegram-bot:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.39.0
+        version: 2.89.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.11.5
+        version: 20.19.27
+      typescript:
+        specifier: ^5.3.3
         version: 5.9.3
 
   packages/api:
@@ -509,10 +519,6 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       postcss-selector-parser: ^7.0.0
-
-  '@directus/sdk@17.0.2':
-    resolution: {integrity: sha512-gKfWH6oQKnHw6mUl5lM32PTjtWrmSF6f09/zfN/74FKGPD853srCwip6rGif2R0GfdcrPHXwGHc7vTMXNDlniw==}
-    engines: {node: '>=18.0.0'}
 
   '@dxup/nuxt@0.2.2':
     resolution: {integrity: sha512-RNpJjDZs9+JcT9N87AnOuHsNM75DEd58itADNd/s1LIF6BZbTLZV0xxilJZb55lntn4TYvscTaXLCBX2fq9CXg==}
@@ -5012,8 +5018,6 @@ snapshots:
     dependencies:
       postcss-selector-parser: 7.1.1
 
-  '@directus/sdk@17.0.2': {}
-
   '@dxup/nuxt@0.2.2(magicast@0.5.1)':
     dependencies:
       '@dxup/unimport': 0.1.2
@@ -6523,7 +6527,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 22.19.3
+      '@types/node': 20.19.27
 
   '@unhead/vue@2.0.19(vue@3.5.26(typescript@5.9.3))':
     dependencies:
