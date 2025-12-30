@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 interface EmailAuthSendRequest {
   email: string;
@@ -7,6 +8,46 @@ interface EmailAuthSendRequest {
 
 function generateVerificationCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function sendEmail(to: string, code: string): Promise<void> {
+  const smtpUser = Deno.env.get('SMTP_USER') ?? '';
+  const smtpPass = Deno.env.get('SMTP_PASS') ?? '';
+
+  const client = new SMTPClient({
+    connection: {
+      hostname: 'smtp.gmail.com',
+      port: 465,
+      tls: true,
+      auth: {
+        username: smtpUser,
+        password: smtpPass,
+      },
+    },
+  });
+
+  await client.send({
+    from: smtpUser,
+    to: to,
+    subject: 'Verification Code PG19',
+    content: `Your verification code: ${code}\n\nCode is valid for 5 minutes.`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #333; margin-bottom: 20px;">Verification Code</h2>
+        <p style="color: #666; margin-bottom: 20px;">Your PG19 login code:</p>
+        <div style="background: #f5f5f5; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 20px;">
+          <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #333;">${code}</span>
+        </div>
+        <p style="color: #999; font-size: 14px;">Code is valid for 5 minutes.</p>
+      </body>
+      </html>
+    `,
+  });
+
+  await client.close();
 }
 
 Deno.serve(async (req: Request) => {
@@ -53,7 +94,7 @@ Deno.serve(async (req: Request) => {
 
     // Generate verification code
     const verificationCode = generateVerificationCode();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     // Create auth session
     const { data: session, error: sessionError } = await supabase
@@ -64,38 +105,30 @@ Deno.serve(async (req: Request) => {
         verification_code: verificationCode,
         person_id: user.id,
         expires_at: expiresAt.toISOString(),
+        metadata: {},
       })
       .select()
       .single();
 
     if (sessionError || !session) {
+      console.error('Session error:', sessionError);
       return new Response(
         JSON.stringify({ error: 'Failed to create session' }),
         { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       );
     }
 
-    // Send email via SMTP webhook/service
-    const smtpWebhook = Deno.env.get('SMTP_WEBHOOK_URL');
-    if (smtpWebhook) {
-      await fetch(smtpWebhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: email,
-          subject: 'Код подтверждения PG19',
-          text: `Ваш код подтверждения: ${verificationCode}\n\nКод действителен 5 минут.`,
-          html: `<p>Ваш код подтверждения: <strong>${verificationCode}</strong></p><p>Код действителен 5 минут.</p>`,
-        }),
-      }).catch(() => {
-        console.error('Failed to send email');
-      });
+    // Send email
+    try {
+      await sendEmail(email, verificationCode);
+    } catch (emailError) {
+      console.error('Email send error:', emailError);
     }
 
     return new Response(
       JSON.stringify({
-        sessionId: session.id,
-        expiresIn: 300000, // 5 minutes in ms
+        sessionId: session.id.toString(),
+        expiresIn: 300,
       }),
       {
         status: 200,
@@ -106,6 +139,7 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
+    console.error('Error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
