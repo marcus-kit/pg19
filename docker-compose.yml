@@ -10,8 +10,9 @@ services:
       - "--api.dashboard=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=pg19-network"
       - "--entrypoints.web.address=:80"
-      - "--log.level=INFO"
+      - "--log.level=DEBUG"
     ports:
       - "80:80"
       - "8181:8080"  # Traefik dashboard (internal 8080 mapped to host 8181)
