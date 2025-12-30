@@ -55,7 +55,7 @@
 
           <!-- CTA Button - visible on all screen sizes -->
           <a
-            href="https://pg19-client.vercel.app"
+            href="https://client.doka.team"
             target="_blank"
             :class="[
               'inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-sm font-semibold transition-all',

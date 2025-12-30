@@ -1,4 +1,30 @@
 services:
+  # ===========================================
+  # Traefik Reverse Proxy
+  # ===========================================
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=INFO"
+    ports:
+      - "80:80"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.doka.team`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+
+  # ===========================================
+  # Production Services (main branch only)
+  # ===========================================
   client-portal:
     build:
       context: .
@@ -11,10 +37,12 @@ services:
         NUXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${NUXT_PUBLIC_TELEGRAM_BOT_USERNAME}
     container_name: pg19-client
     restart: unless-stopped
-    ports:
-      - "3010:3000"
     environment:
       - NODE_ENV=production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.client.rule=Host(`client.doka.team`)"
+      - "traefik.http.services.client.loadbalancer.server.port=3000"
 
   admin-panel:
     build:
@@ -26,10 +54,12 @@ services:
         NUXT_PUBLIC_SUPABASE_ANON_KEY: ${NUXT_PUBLIC_SUPABASE_ANON_KEY}
     container_name: pg19-admin
     restart: unless-stopped
-    ports:
-      - "3011:3000"
     environment:
       - NODE_ENV=production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin.rule=Host(`admin.doka.team`)"
+      - "traefik.http.services.admin.loadbalancer.server.port=3000"
 
   landing:
     build:
@@ -39,10 +69,12 @@ services:
         APP_NAME: landing
     container_name: pg19-landing
     restart: unless-stopped
-    ports:
-      - "3012:3000"
     environment:
       - NODE_ENV=production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.landing.rule=Host(`land.doka.team`)"
+      - "traefik.http.services.landing.loadbalancer.server.port=3000"
 
   landingv2:
     build:
@@ -52,10 +84,12 @@ services:
         APP_NAME: landingv2
     container_name: pg19-landingv2
     restart: unless-stopped
-    ports:
-      - "3013:3000"
     environment:
       - NODE_ENV=production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.landingv2.rule=Host(`landv2.doka.team`)"
+      - "traefik.http.services.landingv2.loadbalancer.server.port=3000"
 
 networks:
   default:

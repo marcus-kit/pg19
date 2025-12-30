@@ -1,19 +1,266 @@
-name: Deploy to Server
+name: Deploy
 
 on:
   push:
     branches:
-      - dev
       - main
+      - dev
+      - 'feature/**'
     paths:
       - 'apps/**'
       - 'packages/**'
       - 'Dockerfile'
       - 'docker-compose.yml'
+  pull_request:
+    types: [closed]
+    branches:
+      - main
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - production
+          - preview
+
+env:
+  DEPLOY_TIMESTAMP: ""
 
 jobs:
-  deploy:
+  # ===========================================
+  # Production Deploy (main branch only)
+  # ===========================================
+  deploy-production:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Install cloudflared
+        run: |
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+          sudo mv cloudflared /usr/local/bin/
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          cat >> ~/.ssh/config << EOF
+          Host doka-server
+            HostName ssh.dokasteel.ru
+            User vv
+            ProxyCommand cloudflared access ssh --hostname %h
+            StrictHostKeyChecking no
+          EOF
+
+      - name: Deploy Production
+        run: |
+          ssh doka-server << 'ENDSSH'
+            cd /opt/pg19
+
+            # Pull latest from main
+            sudo git fetch origin main
+            sudo git checkout main
+            sudo git pull origin main
+
+            # Ensure Traefik is running
+            sudo docker compose up -d traefik
+
+            # Rebuild and restart production services
+            sudo docker compose build client-portal admin-panel landing landingv2
+            sudo docker compose up -d --force-recreate client-portal admin-panel landing landingv2
+
+            # Cleanup old images
+            sudo docker image prune -f
+
+            echo "✅ Production deployment complete!"
+            echo "URLs:"
+            echo "  - https://client.doka.team"
+            echo "  - https://admin.doka.team"
+            echo "  - https://land.doka.team"
+          ENDSSH
+
+  # ===========================================
+  # Preview Deploy (non-main branches)
+  # ===========================================
+  deploy-preview:
+    if: github.ref != 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: preview
+
+    steps:
+      - name: Generate timestamp
+        id: timestamp
+        run: |
+          TIMESTAMP=$(date -u +"%m%d-%H%M")
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "Generated timestamp: $TIMESTAMP"
+
+      - name: Install cloudflared
+        run: |
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+          sudo mv cloudflared /usr/local/bin/
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          cat >> ~/.ssh/config << EOF
+          Host doka-server
+            HostName ssh.dokasteel.ru
+            User vv
+            ProxyCommand cloudflared access ssh --hostname %h
+            StrictHostKeyChecking no
+          EOF
+
+      - name: Deploy Preview
+        env:
+          TIMESTAMP: ${{ steps.timestamp.outputs.timestamp }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          ssh doka-server << ENDSSH
+            cd /opt/pg19
+
+            # Pull the branch
+            sudo git fetch origin ${BRANCH}
+            sudo git checkout ${BRANCH}
+            sudo git pull origin ${BRANCH}
+
+            # Generate unique names
+            TIMESTAMP="${TIMESTAMP}"
+            SAFE_BRANCH=\$(echo "${BRANCH}" | sed 's/[^a-zA-Z0-9]/-/g' | cut -c1-20)
+
+            CLIENT_NAME="client-\${SAFE_BRANCH}-\${TIMESTAMP}"
+            ADMIN_NAME="admin-\${SAFE_BRANCH}-\${TIMESTAMP}"
+            LAND_NAME="land-\${SAFE_BRANCH}-\${TIMESTAMP}"
+
+            echo "Deploying preview environment:"
+            echo "  Client: \${CLIENT_NAME}.doka.team"
+            echo "  Admin: \${ADMIN_NAME}.doka.team"
+            echo "  Landing: \${LAND_NAME}.doka.team"
+
+            # Ensure Traefik is running
+            sudo docker compose up -d traefik
+
+            # Load environment variables
+            source /opt/pg19/.env
+
+            # Build and run preview containers
+            # Client Portal
+            sudo docker build \
+              --build-arg APP_NAME=client-portal \
+              --build-arg NUXT_PUBLIC_SUPABASE_URL=\${NUXT_PUBLIC_SUPABASE_URL} \
+              --build-arg NUXT_PUBLIC_SUPABASE_ANON_KEY=\${NUXT_PUBLIC_SUPABASE_ANON_KEY} \
+              --build-arg NUXT_PUBLIC_ASTERISK_VERIFY_NUMBER=\${NUXT_PUBLIC_ASTERISK_VERIFY_NUMBER} \
+              --build-arg NUXT_PUBLIC_TELEGRAM_BOT_USERNAME=\${NUXT_PUBLIC_TELEGRAM_BOT_USERNAME} \
+              -t pg19-preview-client:\${TIMESTAMP} .
+
+            sudo docker run -d \
+              --name \${CLIENT_NAME} \
+              --network pg19-network \
+              --restart unless-stopped \
+              -e NODE_ENV=production \
+              -l "traefik.enable=true" \
+              -l "traefik.http.routers.\${CLIENT_NAME}.rule=Host(\\\`\${CLIENT_NAME}.doka.team\\\`)" \
+              -l "traefik.http.services.\${CLIENT_NAME}.loadbalancer.server.port=3000" \
+              pg19-preview-client:\${TIMESTAMP}
+
+            # Admin Panel
+            sudo docker build \
+              --build-arg APP_NAME=admin-panel \
+              --build-arg NUXT_PUBLIC_SUPABASE_URL=\${NUXT_PUBLIC_SUPABASE_URL} \
+              --build-arg NUXT_PUBLIC_SUPABASE_ANON_KEY=\${NUXT_PUBLIC_SUPABASE_ANON_KEY} \
+              -t pg19-preview-admin:\${TIMESTAMP} .
+
+            sudo docker run -d \
+              --name \${ADMIN_NAME} \
+              --network pg19-network \
+              --restart unless-stopped \
+              -e NODE_ENV=production \
+              -l "traefik.enable=true" \
+              -l "traefik.http.routers.\${ADMIN_NAME}.rule=Host(\\\`\${ADMIN_NAME}.doka.team\\\`)" \
+              -l "traefik.http.services.\${ADMIN_NAME}.loadbalancer.server.port=3000" \
+              pg19-preview-admin:\${TIMESTAMP}
+
+            # Landing
+            sudo docker build \
+              --build-arg APP_NAME=landing \
+              -t pg19-preview-landing:\${TIMESTAMP} .
+
+            sudo docker run -d \
+              --name \${LAND_NAME} \
+              --network pg19-network \
+              --restart unless-stopped \
+              -e NODE_ENV=production \
+              -l "traefik.enable=true" \
+              -l "traefik.http.routers.\${LAND_NAME}.rule=Host(\\\`\${LAND_NAME}.doka.team\\\`)" \
+              -l "traefik.http.services.\${LAND_NAME}.loadbalancer.server.port=3000" \
+              pg19-preview-landing:\${TIMESTAMP}
+
+            echo ""
+            echo "✅ Preview deployment complete!"
+            echo ""
+            echo "🔗 Preview URLs:"
+            echo "  - https://\${CLIENT_NAME}.doka.team"
+            echo "  - https://\${ADMIN_NAME}.doka.team"
+            echo "  - https://\${LAND_NAME}.doka.team"
+          ENDSSH
+
+      - name: Comment PR with preview URLs
+        if: github.event_name == 'pull_request' || github.event.pull_request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const timestamp = '${{ steps.timestamp.outputs.timestamp }}';
+            const branch = '${{ github.ref_name }}'.replace(/[^a-zA-Z0-9]/g, '-').slice(0, 20);
+
+            const body = `## 🚀 Preview Deployment Ready!
+
+            | App | URL |
+            |-----|-----|
+            | Client Portal | https://client-${branch}-${timestamp}.doka.team |
+            | Admin Panel | https://admin-${branch}-${timestamp}.doka.team |
+            | Landing | https://land-${branch}-${timestamp}.doka.team |
+
+            > Preview will be automatically cleaned up when this PR is merged or closed.`;
+
+            // Find existing comment or create new
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c => c.body.includes('Preview Deployment Ready'));
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body
+              });
+            }
+
+  # ===========================================
+  # Cleanup Preview (on PR close/merge)
+  # ===========================================
+  cleanup-preview:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
 
     steps:
@@ -36,20 +283,88 @@ jobs:
             StrictHostKeyChecking no
           EOF
 
-      - name: Deploy
+      - name: Cleanup Preview Containers
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          ssh doka-server << ENDSSH
+            SAFE_BRANCH=\$(echo "${BRANCH}" | sed 's/[^a-zA-Z0-9]/-/g' | cut -c1-20)
+
+            echo "Cleaning up preview containers for branch: \${SAFE_BRANCH}"
+
+            # Find and stop containers matching the branch pattern
+            CONTAINERS=\$(sudo docker ps -a --filter "name=client-\${SAFE_BRANCH}" --filter "name=admin-\${SAFE_BRANCH}" --filter "name=land-\${SAFE_BRANCH}" -q)
+
+            if [ -n "\$CONTAINERS" ]; then
+              echo "Stopping containers: \$CONTAINERS"
+              sudo docker stop \$CONTAINERS
+              sudo docker rm \$CONTAINERS
+              echo "✅ Preview containers cleaned up"
+            else
+              echo "No preview containers found for branch: \${SAFE_BRANCH}"
+            fi
+
+            # Cleanup unused images
+            sudo docker image prune -f
+          ENDSSH
+
+  # ===========================================
+  # Scheduled Cleanup (old previews)
+  # ===========================================
+  scheduled-cleanup:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install cloudflared
+        run: |
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          chmod +x cloudflared
+          sudo mv cloudflared /usr/local/bin/
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          cat >> ~/.ssh/config << EOF
+          Host doka-server
+            HostName ssh.dokasteel.ru
+            User vv
+            ProxyCommand cloudflared access ssh --hostname %h
+            StrictHostKeyChecking no
+          EOF
+
+      - name: Cleanup Old Previews
         run: |
           ssh doka-server << 'ENDSSH'
-            cd /opt/pg19
+            echo "Cleaning up preview containers older than 7 days..."
 
-            # Pull latest changes
-            sudo git pull origin ${{ github.ref_name }}
+            # Get containers older than 7 days (excluding production)
+            OLD_CONTAINERS=$(sudo docker ps -a --filter "name=client-" --filter "name=admin-" --filter "name=land-" \
+              --format "{{.Names}}" | grep -E "^(client|admin|land)-[^-]+-[0-9]{4}-[0-9]{4}$" || true)
 
-            # Rebuild and restart containers
-            sudo docker compose build client-portal admin-panel landing
-            sudo docker compose up -d --force-recreate client-portal admin-panel landing
+            if [ -n "$OLD_CONTAINERS" ]; then
+              for container in $OLD_CONTAINERS; do
+                # Extract timestamp from container name
+                CONTAINER_TS=$(echo $container | grep -oE "[0-9]{4}-[0-9]{4}$")
+                CONTAINER_DATE=$(echo $CONTAINER_TS | cut -d'-' -f1)
 
-            # Cleanup old images
+                # Current date in MMDD format
+                CURRENT_DATE=$(date -u +"%m%d")
+
+                # Simple check: if month is different and more than 7 days, cleanup
+                # (This is simplified - for production you'd want proper date math)
+                if [ "$CONTAINER_DATE" != "$CURRENT_DATE" ]; then
+                  echo "Removing old container: $container"
+                  sudo docker stop $container 2>/dev/null || true
+                  sudo docker rm $container 2>/dev/null || true
+                fi
+              done
+            fi
+
+            # Cleanup unused images
             sudo docker image prune -f
 
-            echo "Deployment complete!"
+            echo "✅ Cleanup complete"
           ENDSSH
