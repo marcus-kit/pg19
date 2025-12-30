@@ -39,6 +39,12 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.client.rule=Host(`client.doka.team`)"
@@ -56,6 +62,12 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.admin.rule=Host(`admin.doka.team`)"
@@ -71,6 +83,12 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.landing.rule=Host(`land.doka.team`)"
@@ -86,6 +104,12 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.landingv2.rule=Host(`landv2.doka.team`)"
