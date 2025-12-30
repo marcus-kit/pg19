@@ -111,13 +111,13 @@ function handleAuthSuccess(data: unknown) {
   const authData = data as {
     person?: Person;
     contract?: Contract;
-    accounts?: Account[];
+    account?: Account;
   };
-  if (authData.person && authData.contract && authData.accounts) {
+  if (authData.person && authData.contract && authData.account) {
     authStore.setAuth(
       authData.person,
       authData.contract,
-      authData.accounts
+      authData.account
     );
     router.push('/dashboard');
   }

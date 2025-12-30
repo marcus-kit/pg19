@@ -5,7 +5,7 @@ interface AuthState {
   isAuthenticated: boolean;
   person: Person | null;
   contract: Contract | null;
-  accounts: Account[];
+  account: Account | null;
 }
 
 const STORAGE_KEY = 'pg19_client_auth';
@@ -15,29 +15,25 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: false,
     person: null,
     contract: null,
-    accounts: [],
+    account: null,
   }),
 
   getters: {
-    primaryAccount: (state): Account | null => {
-      return state.accounts[0] || null;
-    },
-
     currentBalance: (state): number => {
-      return state.accounts.reduce((sum, acc) => sum + acc.balance, 0);
+      return state.account?.balance || 0;
     },
 
     isBlocked: (state): boolean => {
-      return state.accounts.some(acc => acc.status === 'blocked');
+      return state.account?.status === 'blocked';
     },
   },
 
   actions: {
-    setAuth(person: Person, contract: Contract, accounts: Account[]) {
+    setAuth(person: Person, contract: Contract, account: Account) {
       this.isAuthenticated = true;
       this.person = person;
       this.contract = contract;
-      this.accounts = accounts;
+      this.account = account;
       this.persist();
     },
 
@@ -45,7 +41,7 @@ export const useAuthStore = defineStore('auth', {
       this.isAuthenticated = false;
       this.person = null;
       this.contract = null;
-      this.accounts = [];
+      this.account = null;
       if (import.meta.client) {
         localStorage.removeItem(STORAGE_KEY);
       }
@@ -57,7 +53,7 @@ export const useAuthStore = defineStore('auth', {
           isAuthenticated: this.isAuthenticated,
           person: this.person,
           contract: this.contract,
-          accounts: this.accounts,
+          account: this.account,
         }));
       }
     },
@@ -71,7 +67,7 @@ export const useAuthStore = defineStore('auth', {
             this.isAuthenticated = data.isAuthenticated;
             this.person = data.person;
             this.contract = data.contract;
-            this.accounts = data.accounts;
+            this.account = data.account;
           } catch {
             this.logout();
           }
@@ -79,8 +75,8 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    updateAccounts(accounts: Account[]) {
-      this.accounts = accounts;
+    updateAccount(account: Account) {
+      this.account = account;
       this.persist();
     },
   },

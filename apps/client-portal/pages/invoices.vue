@@ -408,7 +408,7 @@ const currentPage = ref(1);
 const perPage = 10;
 const activeTab = ref<'unpaid' | 'paid' | 'all'>('unpaid');
 const selectedYear = ref(new Date().getFullYear());
-const expandedInvoices = ref<string[]>([]);
+const expandedInvoices = ref<number[]>([]);
 const selectedInvoice = ref<Invoice | null>(null);
 const emailModalInvoice = ref<Invoice | null>(null);
 const emailAddress = ref('');
@@ -526,7 +526,7 @@ function getStatusLabel(status: InvoiceStatus): string {
   return labels[status] || status;
 }
 
-function toggleInvoiceDetails(id: string) {
+function toggleInvoiceDetails(id: number) {
   const index = expandedInvoices.value.indexOf(id);
   if (index === -1) {
     expandedInvoices.value.push(id);
@@ -563,7 +563,7 @@ function sendEmail() {
 }
 
 async function loadInvoices() {
-  const accountIds = authStore.accounts.map(a => a.id);
+  const accountIds = authStore.account ? [authStore.account.id] : [];
   if (accountIds.length === 0) return;
 
   isLoading.value = true;

@@ -1,12 +1,13 @@
-import { createDirectus, rest, authentication } from '@directus/sdk';
-import type { DirectusSchema } from '@pg19/types';
+import { createClient } from '@supabase/supabase-js';
 
-export function createApiClient(url: string) {
-  return createDirectus<DirectusSchema>(url)
-    .with(rest())
-    .with(authentication());
+export function createSupabaseClient(url: string, anonKey: string) {
+  return createClient(url, anonKey, {
+    auth: {
+      persistSession: false, // We manage sessions ourselves
+    },
+  });
 }
 
-export type ApiClient = ReturnType<typeof createApiClient>;
+export type SupabaseClient = ReturnType<typeof createSupabaseClient>;
 
 export * from './composables';

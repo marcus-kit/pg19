@@ -1,10 +1,11 @@
-// Person (Абонент)
-export interface Person {
+// User (Абонент)
+export interface User {
   id: number;
-  customer_number: string;        // AB-00001
-  status: PersonStatus;
+  status: UserStatus;
   first_name: string;
   last_name: string;
+  middle_name: string | null;
+  full_name: string;
   email: string | null;
   phone: string | null;
   telegram_id: string | null;
@@ -17,16 +18,19 @@ export interface Person {
   reg_apartment: string | null;
   created_at: string;
   date_updated: string;
-  contracts?: Contract[];
+  contract?: Contract;
 }
 
-export type PersonStatus = 'active' | 'suspended' | 'terminated';
+export type UserStatus = 'active' | 'suspended' | 'terminated';
+
+// Alias for backward compatibility
+export type Person = User;
 
 // Contract (Договор)
 export interface Contract {
-  id: string;                     // UUID
+  id: number;
   contract_number: string;        // 100001
-  person_id: number | Person;
+  person_id: number | User;
   status: ContractStatus;
   start_date: string | null;
   end_date: string | null;
@@ -38,16 +42,16 @@ export interface Contract {
   notes: string | null;
   date_created: string;
   date_updated: string;
-  accounts?: Account[];
+  account?: Account;
 }
 
 export type ContractStatus = 'draft' | 'active' | 'terminated';
 
 // Account (Лицевой счёт)
 export interface Account {
-  id: string;                     // UUID
-  account_number: string;         // ЛС-00000001
-  contract_id: string | Contract;
+  id: number;
+  account_number: string;         // 100001-1
+  contract_id: number | Contract;
   status: AccountStatus;
   balance: number;                // копейки
   credit_limit: number;           // копейки
@@ -62,7 +66,6 @@ export interface Account {
   address_intercom: string | null;
   address_full: string | null;
   blocked_at: string | null;
-  coverage_id: number | null;
   date_created: string;
   date_updated: string;
   subscriptions?: Subscription[];
@@ -87,7 +90,7 @@ export interface Service {
 // Subscription (Подписка на тариф)
 export interface Subscription {
   id: number;
-  account_id: string;
+  account_id: number;
   service_id: number | Service;
   status: SubscriptionStatus;
   started_at: string;
@@ -103,14 +106,14 @@ export type SubscriptionStatus = 'active' | 'paused' | 'cancelled';
 // Transaction (Транзакция)
 export interface Transaction {
   id: number;
-  account_id: string;
+  account_id: number;
   type: TransactionType;
   amount: number;                 // копейки (+ пополнение, - списание)
   balance_after: number;          // копейки
   description: string | null;
   subscription_id: number | null;
   payment_id: number | null;
-  invoice_id: string | null;
+  invoice_id: number | null;
   fiscal_receipt_id: string | null;
   fiscalized_at: string | null;
   date_created: string;
@@ -121,7 +124,7 @@ export type TransactionType = 'charge' | 'payment' | 'correction' | 'refund' | '
 // Payment (Платёж)
 export interface Payment {
   id: number;
-  account_id: string;
+  account_id: number;
   amount: number;                 // копейки
   provider: PaymentProvider;
   external_id: string | null;
@@ -138,9 +141,9 @@ export type PaymentStatus = 'pending' | 'succeeded' | 'failed' | 'refunded';
 
 // Invoice (Счёт)
 export interface Invoice {
-  id: string;                     // UUID
+  id: number;
   invoice_number: string;         // СЧ-2024/00001
-  account_id: string;
+  account_id: number;
   status: InvoiceStatus;
   amount: number;                 // копейки
   description: string | null;
@@ -155,46 +158,18 @@ export interface Invoice {
 
 export type InvoiceStatus = 'draft' | 'issued' | 'paid' | 'overdue' | 'cancelled';
 
-// Coverage (Зона покрытия)
-export interface Coverage {
-  id: number;
-  address: string;
-  city: string | null;
-  connection_type: ConnectionType;
-  building_type: BuildingType;
-  apartment_count: number | null;
-  available_ports: number | null;
-  is_active: boolean;
-}
-
-export type ConnectionType = 'ftth' | 'fttb' | 'ethernet' | 'wireless' | 'xdsl';
-export type BuildingType = 'mkd' | 'private' | 'business' | 'cottage';
-
-// Directus Schema for SDK
-export interface DirectusSchema {
-  Persons: Person[];
-  contracts: Contract[];
-  accounts: Account[];
-  services: Service[];
-  subscriptions: Subscription[];
-  transactions: Transaction[];
-  payments: Payment[];
-  invoices: Invoice[];
-  coverage: Coverage[];
-}
-
 // Auth types for client portal
 export interface ClientAuthState {
   isAuthenticated: boolean;
-  person: Person | null;
+  user: User | null;
   contract: Contract | null;
-  accounts: Account[];
+  account: Account | null;
 }
 
 // Dashboard stats for admin panel
 export interface DashboardStats {
-  totalPersons: number;
-  activePersons: number;
+  totalUsers: number;
+  activeUsers: number;
   activeAccounts: number;
   blockedAccounts: number;
   totalPositiveBalance: number;
@@ -202,9 +177,9 @@ export interface DashboardStats {
 
 // Auth data returned on successful authentication
 export interface AuthData {
-  person: Person;
+  person: User;  // Keep as 'person' for API compatibility
   contract: Contract;
-  accounts: Account[];
+  account: Account;
 }
 
 // Phone auth types

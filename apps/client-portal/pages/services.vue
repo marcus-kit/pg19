@@ -469,7 +469,7 @@ function submitVacation() {
 
 // Load data
 onMounted(async () => {
-  const accountId = authStore.primaryAccount?.id;
+  const accountId = authStore.account?.id;
 
   try {
     const [services, subscriptions] = await Promise.all([

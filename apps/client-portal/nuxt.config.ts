@@ -20,36 +20,12 @@ export default defineNuxtConfig({
   ],
 
   runtimeConfig: {
-    // Private keys (only available server-side)
-
-    // RabbitMQ (message queue for customer API)
-    rabbitmqProxyUrl: process.env.RABBITMQ_PROXY_URL || '',
-
-    // Phone Auth (Asterisk)
-    asteriskAmiHost: process.env.ASTERISK_AMI_HOST || '',
-    asteriskAmiPort: process.env.ASTERISK_AMI_PORT || '5038',
-    asteriskAmiUsername: process.env.ASTERISK_AMI_USERNAME || '',
-    asteriskAmiSecret: process.env.ASTERISK_AMI_SECRET || '',
-    asteriskCdrTimeout: parseInt(process.env.ASTERISK_CDR_TIMEOUT || '180000'),
-
-    // Email Auth (SMTP)
-    smtpHost: process.env.SMTP_HOST || '',
-    smtpPort: parseInt(process.env.SMTP_PORT || '587'),
-    smtpSecure: process.env.SMTP_SECURE === 'true',
-    smtpUser: process.env.SMTP_USER || '',
-    smtpPassword: process.env.SMTP_PASSWORD || '',
-    smtpFromName: process.env.SMTP_FROM_NAME || 'PG19',
-    smtpFromEmail: process.env.SMTP_FROM_EMAIL || '',
-    emailCodeExpiry: parseInt(process.env.EMAIL_CODE_EXPIRY || '300000'),
-
-    // Telegram Auth
-    telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
-    telegramWebhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || '',
-
     public: {
       appName: process.env.NUXT_PUBLIC_APP_NAME || 'Личный кабинет PG19',
-      asteriskVerifyNumber: process.env.ASTERISK_VERIFY_NUMBER || '+78634431431',
-      telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || '',
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
+      asteriskVerifyNumber: process.env.NUXT_PUBLIC_ASTERISK_VERIFY_NUMBER || '+78634431431',
+      telegramBotUsername: process.env.NUXT_PUBLIC_TELEGRAM_BOT_USERNAME || '',
     },
   },
 

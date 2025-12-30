@@ -120,13 +120,15 @@ async function startAuth() {
   error.value = '';
   isLoading.value = true;
 
+  const config = useRuntimeConfig();
+
   try {
-    // Initialize session and get deep link
+    // Initialize session and get deep link via Edge Function
     const response = await $fetch<{
       sessionId: string;
       deepLink: string;
       expiresIn: number;
-    }>('/api/auth/telegram/init', {
+    }>(`${config.public.supabaseUrl}/functions/v1/telegram-auth-init`, {
       method: 'POST',
     });
 
@@ -157,6 +159,8 @@ async function startAuth() {
 }
 
 function startPolling() {
+  const config = useRuntimeConfig();
+
   // Poll every 2 seconds
   pollingInterval = setInterval(async () => {
     if (!sessionId.value) {
@@ -169,7 +173,7 @@ function startPolling() {
         status: 'pending' | 'verified' | 'expired';
         data?: unknown;
         message?: string;
-      }>('/api/auth/telegram/check', {
+      }>(`${config.public.supabaseUrl}/functions/v1/telegram-auth-check`, {
         method: 'POST',
         body: { sessionId: sessionId.value },
       });
