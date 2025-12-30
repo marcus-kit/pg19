@@ -1,10 +1,11 @@
 // User (Абонент)
 export interface User {
   id: number;
-  customer_number: string;        // AB-00001
   status: UserStatus;
   first_name: string;
   last_name: string;
+  middle_name: string | null;
+  full_name: string;
   email: string | null;
   phone: string | null;
   telegram_id: string | null;
@@ -17,7 +18,7 @@ export interface User {
   reg_apartment: string | null;
   created_at: string;
   date_updated: string;
-  contracts?: Contract[];
+  contract?: Contract;
 }
 
 export type UserStatus = 'active' | 'suspended' | 'terminated';
@@ -38,7 +39,7 @@ export interface Contract {
   notes: string | null;
   date_created: string;
   date_updated: string;
-  accounts?: Account[];
+  account?: Account;
 }
 
 export type ContractStatus = 'draft' | 'active' | 'terminated';
@@ -46,7 +47,7 @@ export type ContractStatus = 'draft' | 'active' | 'terminated';
 // Account (Лицевой счёт)
 export interface Account {
   id: number;
-  account_number: string;         // ЛС-00000001
+  account_number: string;         // 100001-1
   contract_id: number | Contract;
   status: AccountStatus;
   balance: number;                // копейки
@@ -62,7 +63,6 @@ export interface Account {
   address_intercom: string | null;
   address_full: string | null;
   blocked_at: string | null;
-  coverage_id: number | null;
   date_created: string;
   date_updated: string;
   subscriptions?: Subscription[];
@@ -155,27 +155,12 @@ export interface Invoice {
 
 export type InvoiceStatus = 'draft' | 'issued' | 'paid' | 'overdue' | 'cancelled';
 
-// Coverage (Зона покрытия)
-export interface Coverage {
-  id: number;
-  address: string;
-  city: string | null;
-  connection_type: ConnectionType;
-  building_type: BuildingType;
-  apartment_count: number | null;
-  available_ports: number | null;
-  is_active: boolean;
-}
-
-export type ConnectionType = 'ftth' | 'fttb' | 'ethernet' | 'wireless' | 'xdsl';
-export type BuildingType = 'mkd' | 'private' | 'business' | 'cottage';
-
 // Auth types for client portal
 export interface ClientAuthState {
   isAuthenticated: boolean;
   user: User | null;
   contract: Contract | null;
-  accounts: Account[];
+  account: Account | null;
 }
 
 // Dashboard stats for admin panel
@@ -191,7 +176,7 @@ export interface DashboardStats {
 export interface AuthData {
   person: User;  // Keep as 'person' for API compatibility
   contract: Contract;
-  accounts: Account[];
+  account: Account;
 }
 
 // Phone auth types

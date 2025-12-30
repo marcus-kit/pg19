@@ -54,9 +54,9 @@ async function importCSV(filePath: string) {
 
     // 1. Insert users
     const users = batch.map(row => ({
-      customer_number: `AB-${row.account_number}`,
       first_name: row.first_name?.trim() || 'Не указано',
       last_name: row.last_name?.trim() || 'Не указано',
+      middle_name: row.middle_name?.trim() || null,
       email: row.email?.trim() || null,
       phone: row.phone_number?.trim() || null,
       status: 'active' as const,
@@ -65,7 +65,7 @@ async function importCSV(filePath: string) {
     const { data: insertedUsers, error: usersError } = await supabase
       .from('users')
       .insert(users)
-      .select('id, customer_number');
+      .select('id');
 
     if (usersError) {
       console.error('Error inserting users:', usersError);
@@ -74,11 +74,9 @@ async function importCSV(filePath: string) {
 
     totalUsers += insertedUsers.length;
 
-    // 2. Insert contracts
-    const userIdMap = new Map(insertedUsers.map(u => [u.customer_number, u.id]));
-
-    const contracts = batch.map(row => {
-      const userId = userIdMap.get(`AB-${row.account_number}`);
+    // 2. Insert contracts - связываем с users по индексу в батче
+    const contracts = batch.map((row, index) => {
+      const userId = insertedUsers[index]?.id;
       if (!userId) return null;
 
       const fullAddress = [
@@ -112,22 +110,15 @@ async function importCSV(filePath: string) {
 
     totalContracts += insertedContracts.length;
 
-    // 3. Insert accounts
-    const contractIdMap = new Map(insertedContracts.map(c => [c.contract_number, c.id]));
-
-    const accounts = batch.map(row => {
-      const contractId = contractIdMap.get(row.account_number);
-      if (!contractId) return null;
-
-      return {
-        account_number: `ЛС-${row.account_number.padStart(8, '0')}`,
-        contract_id: contractId,
-        status: 'active' as const,
-        balance: 0,
-        credit_limit: 0,
-        currency: 'RUB' as const,
-      };
-    }).filter(Boolean);
+    // 3. Insert accounts - account_number = contract_number + "-1"
+    const accounts = insertedContracts.map(contract => ({
+      account_number: `${contract.contract_number}-1`,
+      contract_id: contract.id,
+      status: 'active' as const,
+      balance: 0,
+      credit_limit: 0,
+      currency: 'RUB' as const,
+    }));
 
     const { error: accountsError } = await supabase
       .from('accounts')
