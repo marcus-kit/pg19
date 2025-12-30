@@ -192,17 +192,53 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  apps/telegram-bot:
+  apps/landingv2:
     dependencies:
-      '@supabase/supabase-js':
-        specifier: ^2.39.0
-        version: 2.89.0
+      '@headlessui/vue':
+        specifier: ^1.7.23
+        version: 1.7.23(vue@3.5.26(typescript@5.9.3))
+      '@heroicons/vue':
+        specifier: ^2.2.0
+        version: 2.2.0(vue@3.5.26(typescript@5.9.3))
+      '@pg19/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@vee-validate/nuxt':
+        specifier: ^4.15.0
+        version: 4.15.1(magicast@0.5.1)(vue@3.5.26(typescript@5.9.3))
+      '@vee-validate/zod':
+        specifier: ^4.15.0
+        version: 4.15.1(vue@3.5.26(typescript@5.9.3))(zod@3.25.76)
+      '@vueuse/nuxt':
+        specifier: ^12.4.0
+        version: 12.8.2(magicast@0.5.1)(nuxt@3.20.2(@parcel/watcher@2.5.1)(@types/node@22.19.3)(@vue/compiler-sfc@3.5.26)(cac@6.7.14)(db0@0.3.4)(ioredis@5.8.2)(magicast@0.5.1)(rollup@4.53.5)(terser@5.44.1)(typescript@5.9.3)(vite@7.3.0(@types/node@22.19.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.2))(yaml@2.8.2))(typescript@5.9.3)
+      nuxt:
+        specifier: ^3.15.2
+        version: 3.20.2(@parcel/watcher@2.5.1)(@types/node@22.19.3)(@vue/compiler-sfc@3.5.26)(cac@6.7.14)(db0@0.3.4)(ioredis@5.8.2)(magicast@0.5.1)(rollup@4.53.5)(terser@5.44.1)(typescript@5.9.3)(vite@7.3.0(@types/node@22.19.3)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.2))(yaml@2.8.2)
+      vue:
+        specifier: ^3.5.13
+        version: 3.5.26(typescript@5.9.3)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
     devDependencies:
+      '@nuxtjs/tailwindcss':
+        specifier: ^6.12.2
+        version: 6.14.0(magicast@0.5.1)(yaml@2.8.2)
       '@types/node':
-        specifier: ^20.11.5
-        version: 20.19.27
+        specifier: ^22.10.5
+        version: 22.19.3
+      autoprefixer:
+        specifier: ^10.4.20
+        version: 10.4.23(postcss@8.5.6)
+      postcss:
+        specifier: ^8.4.49
+        version: 8.5.6
+      tailwindcss:
+        specifier: ^3.4.17
+        version: 3.4.19(yaml@2.8.2)
       typescript:
-        specifier: ^5.3.3
+        specifier: ^5.7.2
         version: 5.9.3
 
   packages/api:
@@ -6527,7 +6563,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 20.19.27
+      '@types/node': 22.19.3
 
   '@unhead/vue@2.0.19(vue@3.5.26(typescript@5.9.3))':
     dependencies:
