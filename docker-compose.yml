@@ -1,0 +1,62 @@
+services:
+  client-portal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: client-portal
+        NUXT_PUBLIC_SUPABASE_URL: ${NUXT_PUBLIC_SUPABASE_URL}
+        NUXT_PUBLIC_SUPABASE_ANON_KEY: ${NUXT_PUBLIC_SUPABASE_ANON_KEY}
+        NUXT_PUBLIC_ASTERISK_VERIFY_NUMBER: ${NUXT_PUBLIC_ASTERISK_VERIFY_NUMBER}
+        NUXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${NUXT_PUBLIC_TELEGRAM_BOT_USERNAME}
+    container_name: pg19-client
+    restart: unless-stopped
+    ports:
+      - "3010:3000"
+    environment:
+      - NODE_ENV=production
+
+  admin-panel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: admin-panel
+        NUXT_PUBLIC_SUPABASE_URL: ${NUXT_PUBLIC_SUPABASE_URL}
+        NUXT_PUBLIC_SUPABASE_ANON_KEY: ${NUXT_PUBLIC_SUPABASE_ANON_KEY}
+    container_name: pg19-admin
+    restart: unless-stopped
+    ports:
+      - "3011:3000"
+    environment:
+      - NODE_ENV=production
+
+  landing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: landing
+    container_name: pg19-landing
+    restart: unless-stopped
+    ports:
+      - "3012:3000"
+    environment:
+      - NODE_ENV=production
+
+  landingv2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: landingv2
+    container_name: pg19-landingv2
+    restart: unless-stopped
+    ports:
+      - "3013:3000"
+    environment:
+      - NODE_ENV=production
+
+networks:
+  default:
+    name: pg19-network
