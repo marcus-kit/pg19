@@ -1,14 +1,48 @@
 /**
  * Email service for sending verification codes
+ *
+ * Supports two modes:
+ * 1. RabbitMQ (production) - queues email for async sending by email-worker
+ * 2. Direct SMTP (fallback) - sends directly via nodemailer
  */
 
 import nodemailer from 'nodemailer';
 import type { RuntimeConfig } from 'nuxt/schema';
+import { queueEmailSend } from './rabbitmq';
 
 /**
  * Send verification code email
+ *
+ * Priority:
+ * 1. If RabbitMQ proxy is configured -> queue to RabbitMQ
+ * 2. If SMTP is configured -> send directly
+ * 3. Fallback -> log to console (dev mode)
  */
 export async function sendVerificationEmail(
+  to: string,
+  code: string,
+  config: RuntimeConfig
+): Promise<void> {
+  // Try RabbitMQ first (production mode)
+  if (config.rabbitmqProxyUrl) {
+    try {
+      await queueEmailSend({ to, code, template: 'verification' }, config);
+      console.log(`[Email] Queued to RabbitMQ for ${to}`);
+      return;
+    } catch (error) {
+      console.warn(`[Email] RabbitMQ failed, falling back to direct SMTP:`, error);
+      // Fall through to direct SMTP
+    }
+  }
+
+  // Direct SMTP (fallback or dev mode)
+  await sendDirectEmail(to, code, config);
+}
+
+/**
+ * Send email directly via SMTP (nodemailer)
+ */
+async function sendDirectEmail(
   to: string,
   code: string,
   config: RuntimeConfig
@@ -17,7 +51,7 @@ export async function sendVerificationEmail(
 
   // Check if SMTP is configured
   if (!smtpHost || !smtpUser) {
-    console.log(`[Email Mock] Код для ${to}: ${code}`);
+    console.log(`[Email Mock] Code for ${to}: ${code}`);
     return;
   }
 
@@ -32,7 +66,24 @@ export async function sendVerificationEmail(
     },
   });
 
-  // Email content
+  const { html, text } = buildEmailContent(code);
+
+  // Send email
+  await transporter.sendMail({
+    from: `"${smtpFromName}" <${smtpFromEmail}>`,
+    to,
+    subject: `${code} — code for login to PG19`,
+    text,
+    html,
+  });
+
+  console.log(`[Email] Sent directly to ${to}`);
+}
+
+/**
+ * Build email content (HTML + plain text)
+ */
+export function buildEmailContent(code: string): { html: string; text: string } {
   const html = `
 <!DOCTYPE html>
 <html>
@@ -56,7 +107,7 @@ export async function sendVerificationEmail(
           <tr>
             <td style="text-align: center; padding-bottom: 16px;">
               <h1 style="margin: 0; color: #264895; font-size: 24px; font-weight: 600;">
-                Код подтверждения
+                Verification Code
               </h1>
             </td>
           </tr>
@@ -65,7 +116,7 @@ export async function sendVerificationEmail(
           <tr>
             <td style="text-align: center; padding-bottom: 24px;">
               <p style="margin: 0; color: #6b7280; font-size: 16px; line-height: 1.5;">
-                Для входа в личный кабинет используйте код:
+                Use this code to log into your account:
               </p>
             </td>
           </tr>
@@ -85,7 +136,7 @@ export async function sendVerificationEmail(
           <tr>
             <td style="text-align: center; padding-bottom: 24px;">
               <p style="margin: 0; color: #9ca3af; font-size: 14px;">
-                Код действителен 5 минут
+                Code expires in 5 minutes
               </p>
             </td>
           </tr>
@@ -94,8 +145,8 @@ export async function sendVerificationEmail(
           <tr>
             <td style="text-align: center; border-top: 1px solid #e5e7eb; padding-top: 24px;">
               <p style="margin: 0; color: #9ca3af; font-size: 12px; line-height: 1.5;">
-                Если вы не запрашивали код, проигнорируйте это письмо.<br>
-                Никому не сообщайте этот код.
+                If you didn't request this code, please ignore this email.<br>
+                Never share this code with anyone.
               </p>
             </td>
           </tr>
@@ -107,7 +158,7 @@ export async function sendVerificationEmail(
     <tr>
       <td style="text-align: center; padding-top: 24px;">
         <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-          &copy; ${new Date().getFullYear()} PG19. Все права защищены.
+          &copy; ${new Date().getFullYear()} PG19. All rights reserved.
         </p>
       </td>
     </tr>
@@ -117,19 +168,12 @@ export async function sendVerificationEmail(
   `.trim();
 
   const text = `
-Код подтверждения для входа в личный кабинет PG19: ${code}
+Verification code for PG19 login: ${code}
 
-Код действителен 5 минут.
+Code expires in 5 minutes.
 
-Если вы не запрашивали код, проигнорируйте это письмо.
+If you didn't request this code, please ignore this email.
   `.trim();
 
-  // Send email
-  await transporter.sendMail({
-    from: `"${smtpFromName}" <${smtpFromEmail}>`,
-    to,
-    subject: `${code} — код для входа в PG19`,
-    text,
-    html,
-  });
+  return { html, text };
 }

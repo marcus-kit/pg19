@@ -13,7 +13,6 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
-    "@directus/sdk": "^17.0.0",
     "@headlessui/vue": "^1.7.0",
     "@heroicons/vue": "^2.1.0",
     "@pg19/api": "workspace:*",

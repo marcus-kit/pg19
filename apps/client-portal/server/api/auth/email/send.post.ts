@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { findPersonByField } from '~/server/utils/directus';
+import { getCustomerByEmail } from '~/server/utils/customerApi';
 import {
   createEmailSession,
   generateCode,
@@ -37,17 +37,17 @@ export default defineEventHandler(async (event) => {
   const { email } = result.data;
 
   try {
-    // Find person by email
-    const person = await findPersonByField('email', email, config);
+    // Find person by email via RabbitMQ
+    const authData = await getCustomerByEmail(email, config);
 
-    if (!person) {
+    if (!authData) {
       throw createError({
         statusCode: 404,
         message: 'Пользователь с таким email не найден',
       });
     }
 
-    if (person.status === 'terminated') {
+    if (authData.person.status === 'terminated') {
       throw createError({
         statusCode: 403,
         message: 'Аккаунт деактивирован',
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
     const sessionId = generateSessionId();
 
     // Store session
-    createEmailSession(sessionId, email, code, person.id);
+    createEmailSession(sessionId, email, code, authData.person.id);
 
     // Send email
     await sendVerificationEmail(email, code, config);

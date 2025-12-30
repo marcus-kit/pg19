@@ -1,16 +1,16 @@
 /**
  * Asterisk CDR integration for phone verification
  *
- * This module provides functionality to check if a call was received
- * from a specific phone number on the Asterisk PBX.
+ * Supports two modes:
+ * 1. RabbitMQ (production) - RPC call to call-check-worker
+ * 2. Mock mode (development) - returns false or configurable response
  *
- * TODO: Implement actual Asterisk integration based on your setup:
- * - Option A: Query CDR database (MySQL/PostgreSQL)
- * - Option B: AMI (Asterisk Manager Interface)
- * - Option C: Webhook from Asterisk dialplan
+ * The call-check-worker queries Asterisk CDR database or AMI
+ * and responds with whether a call was detected.
  */
 
 import type { RuntimeConfig } from 'nuxt/schema';
+import { checkIncomingCallRpc, type CallCheckResponse } from './rabbitmq';
 
 export interface CallRecord {
   calldate: Date;
@@ -25,51 +25,55 @@ export interface CallRecord {
  *
  * @param phone - Phone number to check (normalized format: 7XXXXXXXXXX)
  * @param since - Check calls after this timestamp
- * @param config - Runtime config with Asterisk credentials
+ * @param config - Runtime config with RabbitMQ/Asterisk settings
  */
 export async function checkIncomingCall(
   phone: string,
   since: Date,
   config: RuntimeConfig
 ): Promise<boolean> {
-  const { asteriskAmiHost } = config;
+  // Try RabbitMQ RPC first (production mode)
+  if (config.rabbitmqProxyUrl) {
+    try {
+      const response: CallCheckResponse = await checkIncomingCallRpc(
+        {
+          phone: normalizePhoneForCdr(phone),
+          since: since.toISOString(),
+          verifyNumber: config.public.asteriskVerifyNumber as string,
+        },
+        config
+      );
 
-  // If Asterisk is not configured, use mock mode
-  if (!asteriskAmiHost) {
-    console.log(`[Asterisk Mock] Checking call from ${phone} since ${since.toISOString()}`);
-    // In mock mode, always return false (user needs to configure Asterisk)
-    // For testing, you can change this to return true
-    return false;
+      if (response.error) {
+        console.warn(`[Asterisk] RPC error: ${response.error}`);
+        // Don't fall through - if RabbitMQ is configured but failed,
+        // we should not return mock data in production
+        return false;
+      }
+
+      console.log(
+        `[Asterisk] RPC check for ${phone}: ${response.found ? 'FOUND' : 'NOT FOUND'}`,
+        response.callTime ? `at ${response.callTime}` : ''
+      );
+
+      return response.found;
+    } catch (error) {
+      console.error(`[Asterisk] RPC failed:`, error);
+      return false;
+    }
   }
 
-  // TODO: Implement actual Asterisk CDR check
-  // Example implementation for MySQL CDR database:
-  //
-  // import mysql from 'mysql2/promise';
-  //
-  // const connection = await mysql.createConnection({
-  //   host: config.asteriskCdrHost,
-  //   user: config.asteriskCdrUser,
-  //   password: config.asteriskCdrPassword,
-  //   database: config.asteriskCdrDatabase,
-  // });
-  //
-  // const [rows] = await connection.execute(
-  //   `SELECT * FROM cdr
-  //    WHERE src LIKE ?
-  //    AND dst = ?
-  //    AND calldate >= ?
-  //    AND disposition = 'ANSWERED'
-  //    ORDER BY calldate DESC
-  //    LIMIT 1`,
-  //   [`%${phone.slice(-10)}`, config.public.asteriskVerifyNumber, since]
-  // );
-  //
-  // await connection.end();
-  // return rows.length > 0;
+  // Mock mode (development without RabbitMQ)
+  console.log(`[Asterisk Mock] Checking call from ${phone} since ${since.toISOString()}`);
 
-  // Placeholder: throw error to indicate not implemented
-  throw new Error('Asterisk integration not implemented. Configure CDR database access.');
+  // For development: check if mock mode should return true
+  // Set ASTERISK_MOCK_CALL_FOUND=true in .env to simulate successful call
+  if (process.env.ASTERISK_MOCK_CALL_FOUND === 'true') {
+    console.log(`[Asterisk Mock] Returning mock success`);
+    return true;
+  }
+
+  return false;
 }
 
 /**

@@ -5,7 +5,7 @@
 
 import crypto from 'crypto';
 import { z } from 'zod';
-import { findPersonByField, getPersonAuthData } from '~/server/utils/directus';
+import { getCustomerByTelegram } from '~/server/utils/customerApi';
 
 const bodySchema = z.object({
   id: z.number(),
@@ -91,34 +91,20 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    // Find person by telegram_id
-    const person = await findPersonByField(
-      'telegram_id',
-      telegramData.id.toString(),
-      config
-    );
+    // Find person by telegram_id via RabbitMQ
+    const authData = await getCustomerByTelegram(telegramData.id.toString(), config);
 
-    if (!person) {
+    if (!authData) {
       throw createError({
         statusCode: 404,
         message: 'Telegram не привязан к аккаунту. Обратитесь в поддержку для привязки',
       });
     }
 
-    if (person.status === 'terminated') {
+    if (authData.person.status === 'terminated') {
       throw createError({
         statusCode: 403,
         message: 'Аккаунт деактивирован',
-      });
-    }
-
-    // Get auth data
-    const authData = await getPersonAuthData(person.id, config);
-
-    if (!authData) {
-      throw createError({
-        statusCode: 404,
-        message: 'Данные пользователя не найдены',
       });
     }
 

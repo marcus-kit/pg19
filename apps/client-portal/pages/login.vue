@@ -98,25 +98,26 @@ definePageMeta({
 const router = useRouter();
 const authStore = useAuthStore();
 
-const activeTab = ref<'contract' | 'phone' | 'email' | 'telegram'>('contract');
+const activeTab = ref<'contract' | 'phone' | 'email' | 'telegram'>('telegram');
 
 const tabs = [
+  { id: 'telegram' as const, label: 'Telegram', shortLabel: 'TG', icon: TelegramIcon },
   { id: 'contract' as const, label: 'Договор', shortLabel: 'Договор', icon: ContractIcon },
   { id: 'phone' as const, label: 'Телефон', shortLabel: 'Тел.', icon: PhoneIcon },
   { id: 'email' as const, label: 'Email', shortLabel: 'Email', icon: EmailIcon },
-  { id: 'telegram' as const, label: 'Telegram', shortLabel: 'TG', icon: TelegramIcon },
 ];
 
-function handleAuthSuccess(data: {
-  person?: Person;
-  contract?: Contract;
-  accounts?: Account[];
-}) {
-  if (data.person && data.contract && data.accounts) {
+function handleAuthSuccess(data: unknown) {
+  const authData = data as {
+    person?: Person;
+    contract?: Contract;
+    accounts?: Account[];
+  };
+  if (authData.person && authData.contract && authData.accounts) {
     authStore.setAuth(
-      data.person as Person,
-      data.contract as Contract,
-      data.accounts as Account[]
+      authData.person,
+      authData.contract,
+      authData.accounts
     );
     router.push('/dashboard');
   }

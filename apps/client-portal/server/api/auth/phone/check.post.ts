@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { getPersonAuthData } from '~/server/utils/directus';
+import { getCustomerAuthData } from '~/server/utils/customerApi';
 import {
   getPhoneSession,
   verifyPhoneSession,
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
 
     // If already verified, return auth data
     if (session.verified) {
-      const authData = await getPersonAuthData(session.personId, config);
+      const authData = await getCustomerAuthData(session.personId, config);
 
       if (!authData) {
         throw createError({
@@ -83,8 +83,8 @@ export default defineEventHandler(async (event) => {
     // Mark session as verified
     verifyPhoneSession(sessionId);
 
-    // Get auth data
-    const authData = await getPersonAuthData(session.personId, config);
+    // Get auth data via RabbitMQ
+    const authData = await getCustomerAuthData(session.personId, config);
 
     if (!authData) {
       throw createError({

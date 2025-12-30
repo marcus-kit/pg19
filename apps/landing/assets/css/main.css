@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Offset for fixed header */
+section[id] {
+  scroll-margin-top: 80px;
+}
+
+/* Hero section should start at top */
+#hero {
+  scroll-margin-top: 0;
+}
+
+/* Fix for iOS viewport height */
+@supports (height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}
+
+/* Prevent iOS rubber band scrolling issues */
+body {
+  overscroll-behavior-y: none;
+}

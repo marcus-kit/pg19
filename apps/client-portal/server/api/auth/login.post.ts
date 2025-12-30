@@ -1,7 +1,13 @@
+/**
+ * POST /api/auth/login
+ * Login with contract number + full name
+ */
+
+import { getCustomerByContract } from '~/server/utils/customerApi';
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
   const body = await readBody(event);
-  const directusUrl = (config.public.directusUrl as string).replace(/\/$/, '');
 
   const { contractNumber, fullName } = body;
 
@@ -25,50 +31,17 @@ export default defineEventHandler(async (event) => {
   const firstName = nameParts[1];
 
   try {
-    // Use static API token for Directus access
-    const token = config.directusApiToken as string;
+    // Get customer data via RabbitMQ
+    const authData = await getCustomerByContract(contractNumber, config);
 
-    if (!token) {
-      throw createError({
-        statusCode: 500,
-        message: 'Сервер не настроен для авторизации',
-      });
-    }
-
-    // Build query string manually for Directus bracket notation
-    const params = new URLSearchParams();
-    params.append('filter[contract_number][_eq]', contractNumber);
-    params.append('filter[status][_eq]', 'active');
-    params.append('fields', '*,person_id.*,accounts.*');
-    params.append('limit', '1');
-
-    const contractsResponse = await $fetch<{ data: any[] }>(
-      `${directusUrl}/items/contracts?${params.toString()}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-
-    const contracts = contractsResponse.data;
-
-    if (!contracts || contracts.length === 0) {
+    if (!authData) {
       throw createError({
         statusCode: 404,
         message: 'Договор не найден',
       });
     }
 
-    const contract = contracts[0];
-    const person = contract.person_id;
-
-    if (!person) {
-      throw createError({
-        statusCode: 404,
-        message: 'Абонент не найден',
-      });
-    }
+    const { person, contract } = authData;
 
     // Check name (case-insensitive)
     const normalizedLastName = lastName.trim().toLowerCase();
@@ -91,33 +64,28 @@ export default defineEventHandler(async (event) => {
       });
     }
 
+    // Check contract status
+    if (contract.status !== 'active') {
+      throw createError({
+        statusCode: 403,
+        message: 'Договор не активен',
+      });
+    }
+
     // Return auth data
     return {
-      data: {
-        person,
-        contract: {
-          ...contract,
-          person_id: person.id, // Replace nested object with ID
-        },
-        accounts: contract.accounts || [],
-      },
+      data: authData,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Re-throw createError errors
-    if (error.statusCode) {
+    if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error;
     }
 
     console.error('Client auth error:', error);
-    console.error('Error details:', JSON.stringify({
-      message: error.message,
-      statusCode: error.statusCode,
-      data: error.data,
-      response: error.response,
-    }));
     throw createError({
-      statusCode: error.statusCode || 500,
-      message: error.data?.errors?.[0]?.message || error.message || 'Ошибка авторизации',
+      statusCode: 500,
+      message: 'Ошибка авторизации',
     });
   }
 });

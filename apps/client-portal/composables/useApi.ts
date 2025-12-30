@@ -13,100 +13,82 @@ import type {
   TelegramAuthData,
 } from '@pg19/types';
 
-interface QueryParams {
-  filter?: Record<string, unknown>;
-  sort?: string[];
-  limit?: number;
-  offset?: number;
-  fields?: string[];
-}
-
-function buildQueryString(params?: QueryParams): string {
-  if (!params) return '';
-
-  const queryParts: string[] = [];
-
-  if (params.filter && Object.keys(params.filter).length > 0) {
-    queryParts.push(`filter=${encodeURIComponent(JSON.stringify(params.filter))}`);
-  }
-  if (params.sort?.length) {
-    queryParts.push(`sort=${params.sort.join(',')}`);
-  }
-  if (params.limit !== undefined) {
-    queryParts.push(`limit=${params.limit}`);
-  }
-  if (params.offset !== undefined) {
-    queryParts.push(`offset=${params.offset}`);
-  }
-  if (params.fields?.length) {
-    queryParts.push(`fields=${params.fields.join(',')}`);
-  }
-
-  return queryParts.length > 0 ? '?' + queryParts.join('&') : '';
-}
-
 export function useApi() {
-  // Use server-side proxy for all API calls
-  async function fetchApi<T>(path: string, options: {
-    method?: string;
-    body?: unknown;
-    params?: QueryParams;
-  } = {}): Promise<T> {
-    const queryString = buildQueryString(options.params);
-    const url = `/api/directus/${path}${queryString}`;
-
-    const response = await $fetch<{ data: T }>(url, {
-      method: options.method || 'GET',
-      body: options.body,
-    });
-
-    return response.data;
-  }
-
   return {
     // ============ Services ============
-    async getServices(params?: QueryParams) {
-      const mergedParams = {
-        filter: { is_active: { _eq: true } },
-        sort: ['sort_order'],
-        ...params
-      };
-      return fetchApi<Service[]>('Services', { params: mergedParams });
-    },
-
-    async getService(id: number) {
-      return fetchApi<Service>(`Services/${id}`);
+    async getServices() {
+      const response = await $fetch<{ data: Service[] }>('/api/data/services');
+      return response.data;
     },
 
     // ============ Subscriptions ============
-    async getSubscriptions(params?: QueryParams) {
-      const mergedParams = {
-        fields: ['*', 'service_id.*'],
-        ...params
-      };
-      return fetchApi<Subscription[]>('subscriptions', { params: mergedParams });
+    async getSubscriptions(accountId: string) {
+      const response = await $fetch<{ data: Subscription[] }>(
+        '/api/data/subscriptions',
+        { params: { accountId } }
+      );
+      return response.data;
     },
 
     // ============ Transactions ============
-    async getTransactions(params?: QueryParams) {
-      const mergedParams = {
-        sort: ['-date_created'],
-        ...params
-      };
-      return fetchApi<Transaction[]>('transactions', { params: mergedParams });
+    async getTransactions(
+      accountId: string,
+      params?: { limit?: number; offset?: number; year?: number }
+    ) {
+      const response = await $fetch<{
+        data: Transaction[];
+        meta: { total: number; limit: number; offset: number };
+      }>('/api/data/transactions', {
+        params: { accountId, ...params },
+      });
+      return response;
+    },
+
+    async getAccountTransactions(accountId: string, params?: { limit?: number }) {
+      const response = await $fetch<{
+        data: Transaction[];
+        meta: { total: number; limit: number; offset: number };
+      }>('/api/data/transactions', {
+        params: { accountId, limit: params?.limit || 10 },
+      });
+      return response.data;
     },
 
     // ============ Invoices ============
-    async getInvoices(params?: QueryParams) {
-      const mergedParams = {
-        sort: ['-date_created'],
-        ...params
-      };
-      return fetchApi<Invoice[]>('invoices', { params: mergedParams });
+    async getInvoices(
+      accountId: string,
+      params?: { status?: string; limit?: number; offset?: number; year?: number }
+    ) {
+      const response = await $fetch<{
+        data: Invoice[];
+        meta: { total: number; limit: number; offset: number };
+      }>('/api/data/invoices', {
+        params: { accountId, ...params },
+      });
+      return response;
     },
 
-    async getInvoice(id: string) {
-      return fetchApi<Invoice>(`invoices/${id}`);
+    async getInvoice(accountId: string, invoiceId: string) {
+      // Get single invoice by filtering
+      const response = await $fetch<{
+        data: Invoice[];
+        meta: { total: number; limit: number; offset: number };
+      }>('/api/data/invoices', {
+        params: { accountId, limit: 1 },
+      });
+      const invoice = response.data.find((inv) => inv.id === invoiceId);
+      if (!invoice) {
+        throw new Error('Счёт не найден');
+      }
+      return invoice;
+    },
+
+    // ============ Balance ============
+    async getBalance(accountId: string) {
+      const response = await $fetch<{
+        data: { balance: number; creditLimit: number };
+      }>('/api/data/balance', { params: { accountId } });
+      return response.data;
     },
 
     // ============ Auth ============
