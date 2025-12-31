@@ -122,6 +122,7 @@ All frontends are **Nuxt 3** applications with:
 **Admin Panel** (`apps/admin-panel/`):
 - Direct Supabase queries via `@pg19/api` composables
 - CRUD operations for users, accounts, services, subscriptions
+- Routes: `/users/`, `/accounts/`, `/invoices/`, `/services/`, `/payments/`, `/transactions/`, `/reports/`
 - Dashboard statistics
 - News management
 
@@ -129,7 +130,11 @@ All frontends are **Nuxt 3** applications with:
 
 **@pg19/api**:
 - `createSupabaseClient()` - Factory for Supabase client
-- `useSupabase()` - Admin composable with CRUD methods (getUsers, getAccounts, etc.)
+- `useSupabase()` - Admin composable with CRUD methods:
+  - Users: `getUsers()`, `getUser(id)`, `getUserWithAccount(id)`, `createUser()`, `updateUser()`
+  - Accounts: `getAccounts()`, `getAccount(id)`, `getAccountByContractNumber()`
+  - Services, Subscriptions, Transactions, Payments, Invoices
+  - `getDashboardStats()` - Aggregate statistics
 - `useClientAuth()` - Client composable that calls Edge Functions for auth
 
 **@pg19/types**:
@@ -139,7 +144,9 @@ All frontends are **Nuxt 3** applications with:
 - Account contains contract fields: contract_number, contract_status, start_date, end_date
 
 **@pg19/ui**:
-- Shared Vue components used across apps
+- Shared Vue components: BaseCard, BaseButton, BaseInput, BaseSelect, BaseModal, BaseTable, StatusBadge, BalanceDisplay, etc.
+- Utility functions: `formatMoney()`, `formatPhone()`, `formatDate()`, `formatFullName()`, `formatAddress()`
+- StatusBadge supports types: `user`, `person`, `contract`, `account`, `subscription`, `payment`, `invoice`
 
 ### Telegram Bot
 
