@@ -478,7 +478,17 @@ onMounted(async () => {
     ]);
 
     availableServices.value = services;
-    currentSubscription.value = subscriptions.find(s => s.status === 'active') || null;
+
+    // Select main tariff: prefer subscription with highest price (main internet plan)
+    const activeSubscriptions = subscriptions
+      .filter(s => s.status === 'active')
+      .sort((a, b) => {
+        const priceA = a.custom_price ?? (a.service?.price_monthly || 0) * 100;
+        const priceB = b.custom_price ?? (b.service?.price_monthly || 0) * 100;
+        return priceB - priceA; // descending
+      });
+
+    currentSubscription.value = activeSubscriptions[0] || null;
   } catch (e) {
     console.error('Failed to load services:', e);
   } finally {

@@ -367,9 +367,17 @@ onMounted(async () => {
       allSubscriptions.push(...subs.filter(s => s.status === 'active'));
     }
 
-    currentSubscription.value = allSubscriptions.find(
-      s => s.account_id === accountId
-    ) ?? allSubscriptions[0] ?? null;
+    // Select main tariff: prefer subscription with highest price (main internet plan)
+    // Sort by price descending and take the first one
+    const sortedSubscriptions = allSubscriptions
+      .filter(s => s.account_id === accountId)
+      .sort((a, b) => {
+        const priceA = a.custom_price ?? (a.service?.price_monthly || 0) * 100;
+        const priceB = b.custom_price ?? (b.service?.price_monthly || 0) * 100;
+        return priceB - priceA; // descending
+      });
+
+    currentSubscription.value = sortedSubscriptions[0] ?? allSubscriptions[0] ?? null;
   } catch (e) {
     console.error('Failed to load subscriptions:', e);
   }
