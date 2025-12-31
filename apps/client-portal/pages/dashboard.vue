@@ -5,44 +5,56 @@
 
     <!-- Connection Status Card -->
     <BaseCard v-if="account" class="border-l-4" :class="connectionStatusBorderClass">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="flex items-center gap-4">
-          <div
-            class="w-12 h-12 rounded-full flex items-center justify-center"
-            :class="connectionStatusBgClass"
-          >
-            <WifiIcon v-if="isConnected" class="w-6 h-6 text-secondary-600" />
-            <WifiOffIcon v-else class="w-6 h-6 text-red-600" />
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span
-                class="inline-flex items-center gap-1.5 text-sm font-medium"
-                :class="connectionStatusTextClass"
-              >
-                <span class="w-2 h-2 rounded-full" :class="connectionStatusDotClass" />
-                {{ connectionStatusText }}
-              </span>
-            </div>
-            <p v-if="currentTariff" class="text-gray-900 font-semibold mt-0.5">
-              {{ currentTariff.name }}
-            </p>
-            <p v-if="currentTariff?.description" class="text-sm text-gray-500">
-              {{ currentTariff.description }}
-            </p>
+      <div class="flex items-center gap-4 mb-4">
+        <div
+          class="w-12 h-12 rounded-full flex items-center justify-center"
+          :class="connectionStatusBgClass"
+        >
+          <WifiIcon v-if="isConnected" class="w-6 h-6 text-secondary-600" />
+          <WifiOffIcon v-else class="w-6 h-6 text-red-600" />
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <span
+              class="inline-flex items-center gap-1.5 text-sm font-medium"
+              :class="connectionStatusTextClass"
+            >
+              <span class="w-2 h-2 rounded-full" :class="connectionStatusDotClass" />
+              {{ connectionStatusText }}
+            </span>
+            <NuxtLink
+              to="/services"
+              class="text-sm text-primary-500 hover:text-primary-600 font-medium"
+            >
+              Управление услугами →
+            </NuxtLink>
           </div>
         </div>
-        <div class="flex flex-col md:items-end gap-1">
-          <div v-if="currentTariff" class="text-lg font-bold text-gray-900">
-            {{ formatMoney(tariffPrice) }}<span class="text-sm font-normal text-gray-500">/мес</span>
+      </div>
+
+      <!-- Subscriptions List -->
+      <div v-if="subscriptions.length > 0" class="space-y-2">
+        <div
+          v-for="sub in subscriptions"
+          :key="sub.id"
+          class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+        >
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 truncate">
+              {{ sub.service?.name || 'Услуга' }}
+            </p>
           </div>
-          <NuxtLink
-            to="/services"
-            class="text-sm text-primary-500 hover:text-primary-600 font-medium"
-          >
-            Сменить тариф →
-          </NuxtLink>
+          <div class="ml-4 text-sm font-semibold text-gray-700">
+            {{ formatMoney(getSubscriptionPrice(sub)) }}<span class="text-xs font-normal text-gray-500">/мес</span>
+          </div>
         </div>
+        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+          <span class="text-sm font-medium text-gray-600">Итого в месяц:</span>
+          <span class="text-lg font-bold text-gray-900">{{ formatMoney(totalMonthlyPrice) }}</span>
+        </div>
+      </div>
+      <div v-else class="text-sm text-gray-500">
+        Нет активных услуг
       </div>
     </BaseCard>
 
@@ -236,7 +248,7 @@ const authStore = useAuthStore();
 const api = useApi();
 
 // Data
-const currentSubscription = ref<Subscription | null>(null);
+const subscriptions = ref<Subscription[]>([]);
 const unpaidInvoices = ref<Invoice[]>([]);
 const isLoadingInvoices = ref(true);
 const openTicketsCount = ref(0);
@@ -245,27 +257,22 @@ const hasAutopay = ref(false);
 // Computed
 const account = computed(() => authStore.account);
 
-// next_charge_date removed from schema - calculate from subscription if needed
-const nextChargeDate = computed(() => null);
+// Helper function to get subscription price
+function getSubscriptionPrice(sub: Subscription): number {
+  if (sub.custom_price !== null) return sub.custom_price;
+  return (sub.service?.price_monthly || 0) * 100;
+}
 
-const currentTariff = computed<Service | null>(() => {
-  if (!currentSubscription.value?.service) return null;
-  return currentSubscription.value.service;
+// Total monthly price for all subscriptions
+const totalMonthlyPrice = computed(() => {
+  return subscriptions.value.reduce((sum, sub) => sum + getSubscriptionPrice(sub), 0);
 });
 
-const tariffPrice = computed(() => {
-  if (!currentSubscription.value) return 0;
-  if (currentSubscription.value.custom_price !== null) {
-    return currentSubscription.value.custom_price;
-  }
-  return (currentSubscription.value.service?.price_monthly || 0) * 100;
-});
-
-const monthlyCharge = computed(() => tariffPrice.value);
+const monthlyCharge = computed(() => totalMonthlyPrice.value);
 
 const daysRemaining = computed(() => {
-  if (authStore.currentBalance <= 0 || tariffPrice.value <= 0) return null;
-  const dailyRate = tariffPrice.value / 30;
+  if (authStore.currentBalance <= 0 || totalMonthlyPrice.value <= 0) return null;
+  const dailyRate = totalMonthlyPrice.value / 30;
   return Math.floor(authStore.currentBalance / dailyRate);
 });
 
@@ -312,7 +319,7 @@ const connectionStatusDotClass = computed(() => {
 });
 
 const lowBalance = computed(() => {
-  return authStore.currentBalance < tariffPrice.value && authStore.currentBalance > 0;
+  return authStore.currentBalance < totalMonthlyPrice.value && authStore.currentBalance > 0;
 });
 
 const hasUnpaidInvoices = computed(() => unpaidInvoices.value.length > 0);
@@ -360,24 +367,16 @@ onMounted(async () => {
   const accountId = account.value?.id;
 
   try {
-    // Load subscriptions for all accounts
-    const allSubscriptions: Subscription[] = [];
-    for (const accountId of accountIds) {
-      const subs = await api.getSubscriptions(accountId);
-      allSubscriptions.push(...subs.filter(s => s.status === 'active'));
-    }
-
-    // Select main tariff: prefer subscription with highest price (main internet plan)
-    // Sort by price descending and take the first one
-    const sortedSubscriptions = allSubscriptions
-      .filter(s => s.account_id === accountId)
+    // Load all active subscriptions
+    const subs = await api.getSubscriptions(accountId!);
+    // Sort by price descending (main services first)
+    subscriptions.value = subs
+      .filter(s => s.status === 'active')
       .sort((a, b) => {
         const priceA = a.custom_price ?? (a.service?.price_monthly || 0) * 100;
         const priceB = b.custom_price ?? (b.service?.price_monthly || 0) * 100;
-        return priceB - priceA; // descending
+        return priceB - priceA;
       });
-
-    currentSubscription.value = sortedSubscriptions[0] ?? allSubscriptions[0] ?? null;
   } catch (e) {
     console.error('Failed to load subscriptions:', e);
   }

@@ -2,30 +2,39 @@
   <div>
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Тарифы и услуги</h1>
 
-    <!-- Current Tariff -->
-    <BaseCard v-if="currentSubscription" class="mb-6 bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-2 mb-2">
-            <span class="px-2 py-1 bg-primary-500 text-white text-xs font-medium rounded">Ваш тариф</span>
-            <StatusBadge :status="currentSubscription.status" type="subscription" />
+    <!-- Current Subscriptions -->
+    <BaseCard v-if="subscriptions.length > 0" class="mb-6 bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="px-2 py-1 bg-primary-500 text-white text-xs font-medium rounded">Ваши услуги</span>
+      </div>
+
+      <div class="space-y-3">
+        <div
+          v-for="sub in subscriptions"
+          :key="sub.id"
+          class="flex items-center justify-between py-3 border-b border-primary-200/50 last:border-0"
+        >
+          <div class="flex-1">
+            <h4 class="font-semibold text-gray-900">{{ sub.service?.name || 'Услуга' }}</h4>
+            <p v-if="sub.service?.description" class="text-sm text-gray-600 mt-0.5">
+              {{ sub.service.description }}
+            </p>
+            <p class="text-xs text-gray-500 mt-1">
+              С {{ formatDate(sub.started_at) }}
+            </p>
           </div>
-          <h3 class="text-2xl font-bold text-gray-900">
-            {{ currentSubscription.service?.name || 'Тариф' }}
-          </h3>
-          <p v-if="currentSubscription.service?.description" class="text-gray-600 mt-1">
-            {{ currentSubscription.service.description }}
-          </p>
-          <p class="text-sm text-gray-500 mt-2">
-            Подключён с {{ formatDate(currentSubscription.started_at) }}
-          </p>
+          <div class="ml-4 text-right">
+            <p class="text-lg font-bold text-primary-600">
+              {{ formatMoney(getSubscriptionPrice(sub)) }}
+            </p>
+            <p class="text-xs text-gray-500">в месяц</p>
+          </div>
         </div>
-        <div class="text-right">
-          <p class="text-3xl font-bold text-primary-600">
-            {{ formatMoney(currentServicePrice) }}
-          </p>
-          <p class="text-sm text-gray-500">в месяц</p>
-        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-4 mt-4 border-t border-primary-200">
+        <span class="font-medium text-gray-700">Итого в месяц:</span>
+        <span class="text-2xl font-bold text-primary-600">{{ formatMoney(totalMonthlyPrice) }}</span>
       </div>
     </BaseCard>
 
@@ -270,11 +279,15 @@
     <BaseModal v-model:isOpen="showChangeTariffModal" title="Смена тарифа">
       <div v-if="selectedService" class="space-y-4">
         <div class="p-4 bg-gray-50 rounded-lg">
-          <div class="flex justify-between mb-2">
-            <span class="text-gray-600">Текущий тариф</span>
-            <span class="font-medium">{{ currentSubscription?.service?.name }}</span>
+          <div class="mb-2">
+            <span class="text-gray-600">Текущие услуги:</span>
+            <ul class="mt-1 text-sm">
+              <li v-for="sub in subscriptions" :key="sub.id" class="font-medium">
+                {{ sub.service?.name }}
+              </li>
+            </ul>
           </div>
-          <div class="flex justify-between">
+          <div class="flex justify-between pt-2 border-t border-gray-200">
             <span class="text-gray-600">Новый тариф</span>
             <span class="font-semibold text-primary-600">{{ selectedService.name }}</span>
           </div>
@@ -348,11 +361,22 @@ const api = useApi();
 // State
 const activeTab = ref<'tariffs' | 'additional' | 'vacation'>('tariffs');
 const availableServices = ref<Service[]>([]);
-const currentSubscription = ref<Subscription | null>(null);
+const subscriptions = ref<Subscription[]>([]);
 const isLoading = ref(true);
 const showChangeTariffModal = ref(false);
 const selectedService = ref<Service | null>(null);
 const changeOption = ref('next_period');
+
+// Helper function to get subscription price
+function getSubscriptionPrice(sub: Subscription): number {
+  if (sub.custom_price !== null) return sub.custom_price;
+  return (sub.service?.price_monthly || 0) * 100;
+}
+
+// Total monthly price
+const totalMonthlyPrice = computed(() => {
+  return subscriptions.value.reduce((sum, sub) => sum + getSubscriptionPrice(sub), 0);
+});
 
 const vacation = reactive({
   startDate: '',
@@ -399,14 +423,6 @@ const additionalServices = [
 ];
 
 // Computed
-const currentServicePrice = computed(() => {
-  if (!currentSubscription.value) return 0;
-  if (currentSubscription.value.custom_price !== null) {
-    return currentSubscription.value.custom_price;
-  }
-  return (currentSubscription.value.service?.price_monthly || 0) * 100;
-});
-
 const minVacationDate = computed(() => {
   const date = new Date();
   date.setDate(date.getDate() + 1);
@@ -422,8 +438,8 @@ const vacationDuration = computed(() => {
 });
 
 const vacationSavings = computed(() => {
-  if (!vacationDuration.value || !currentServicePrice.value) return 0;
-  const dailyRate = currentServicePrice.value / 30;
+  if (!vacationDuration.value || !totalMonthlyPrice.value) return 0;
+  const dailyRate = totalMonthlyPrice.value / 30;
   return Math.floor(dailyRate * vacationDuration.value) - 5000; // minus vacation fee
 });
 
@@ -433,11 +449,12 @@ const canSubmitVacation = computed(() => {
 
 // Methods
 function isCurrentService(serviceId: number): boolean {
-  if (!currentSubscription.value) return false;
-  const subServiceId = typeof currentSubscription.value.service_id === 'number'
-    ? currentSubscription.value.service_id
-    : currentSubscription.value.service?.id;
-  return subServiceId === serviceId;
+  return subscriptions.value.some(sub => {
+    const subServiceId = typeof sub.service_id === 'number'
+      ? sub.service_id
+      : sub.service?.id;
+    return subServiceId === serviceId;
+  });
 }
 
 function getSpeedLabel(service: Service): string {
@@ -472,23 +489,21 @@ onMounted(async () => {
   const accountId = authStore.account?.id;
 
   try {
-    const [services, subscriptions] = await Promise.all([
+    const [services, subs] = await Promise.all([
       api.getServices(),
       accountId ? api.getSubscriptions(accountId) : Promise.resolve([]),
     ]);
 
     availableServices.value = services;
 
-    // Select main tariff: prefer subscription with highest price (main internet plan)
-    const activeSubscriptions = subscriptions
+    // Store all active subscriptions sorted by price (highest first)
+    subscriptions.value = subs
       .filter(s => s.status === 'active')
       .sort((a, b) => {
         const priceA = a.custom_price ?? (a.service?.price_monthly || 0) * 100;
         const priceB = b.custom_price ?? (b.service?.price_monthly || 0) * 100;
-        return priceB - priceA; // descending
+        return priceB - priceA;
       });
-
-    currentSubscription.value = activeSubscriptions[0] || null;
   } catch (e) {
     console.error('Failed to load services:', e);
   } finally {
