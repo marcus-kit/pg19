@@ -10,7 +10,6 @@ import type {
   PhoneAuthInitResponse,
   PhoneAuthCheckResponse,
   EmailAuthSendResponse,
-  TelegramAuthData,
   News,
   NewsAttachment,
 } from '@pg19/types';
@@ -306,14 +305,29 @@ export function useApi() {
         );
       },
 
-      // Telegram auth - Verify widget data
-      async telegramVerify(data: TelegramAuthData): Promise<AuthData> {
-        return await $fetch<AuthData>(
-          `${config.public.supabaseUrl}/functions/v1/telegram-auth`,
+      // Telegram auth - Step 1: Initialize session and get deep link
+      async telegramInit(): Promise<{ sessionId: string; deepLink: string; expiresIn: number }> {
+        return await $fetch<{ sessionId: string; deepLink: string; expiresIn: number }>(
+          `${config.public.supabaseUrl}/functions/v1/telegram-auth-init`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: data,
+          }
+        );
+      },
+
+      // Telegram auth - Step 2: Check session status
+      async telegramCheck(sessionId: string): Promise<{
+        status: 'pending' | 'verified' | 'expired';
+        data?: AuthData;
+        message?: string;
+      }> {
+        return await $fetch(
+          `${config.public.supabaseUrl}/functions/v1/telegram-auth-check`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: { sessionId },
           }
         );
       },
