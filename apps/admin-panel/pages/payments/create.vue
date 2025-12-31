@@ -110,7 +110,7 @@ async function handleSubmit() {
 
   try {
     const data: Partial<Payment> = {
-      account_id: form.account_id,
+      account_id: Number(form.account_id),
       amount: Math.round(parseFloat(form.amount) * 100),
       provider: form.provider as Payment['provider'],
       status: 'succeeded',

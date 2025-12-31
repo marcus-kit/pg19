@@ -7,7 +7,7 @@
         </svg>
       </NuxtLink>
       <h1 class="text-2xl font-bold text-gray-900">
-        {{ account?.account_number || 'Загрузка...' }}
+        Счёт #{{ account?.contract_number || '...' }}-1
       </h1>
       <StatusBadge v-if="account" :status="account.status" type="account" />
     </div>
@@ -33,9 +33,9 @@
           <p class="text-2xl font-bold text-gray-900">{{ formatMoney(account.credit_limit) }}</p>
         </BaseCard>
         <BaseCard>
-          <p class="text-sm text-gray-500 mb-1">Следующее списание</p>
+          <p class="text-sm text-gray-500 mb-1">Статус договора</p>
           <p class="text-2xl font-bold text-gray-900">
-            {{ account.next_charge_date ? formatDate(account.next_charge_date) : '—' }}
+            {{ account.contract_status || '—' }}
           </p>
         </BaseCard>
       </div>
@@ -259,7 +259,7 @@ async function submitCorrection() {
 
 onMounted(async () => {
   try {
-    const id = route.params.id as string;
+    const id = Number(route.params.id);
     account.value = await api.getAccount(id) as unknown as Account;
   } catch (e) {
     console.error('Failed to load account:', e);

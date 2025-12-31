@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center gap-4 mb-6">
-      <NuxtLink to="/persons" class="text-gray-500 hover:text-gray-700">
+      <NuxtLink to="/users" class="text-gray-500 hover:text-gray-700">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
@@ -117,7 +117,7 @@
       </div>
 
       <div class="mt-6 flex justify-end gap-3">
-        <NuxtLink to="/persons">
+        <NuxtLink to="/users">
           <BaseButton variant="ghost">Отмена</BaseButton>
         </NuxtLink>
         <BaseButton type="submit" variant="primary" :loading="isSubmitting">
@@ -130,7 +130,7 @@
 
 <script setup lang="ts">
 import { BaseCard, BaseInput, BaseSelect, BaseButton, BaseAlert } from '@pg19/ui';
-import type { Person } from '@pg19/types';
+import type { User } from '@pg19/types';
 
 definePageMeta({
   middleware: 'auth',
@@ -174,10 +174,10 @@ async function handleSubmit() {
   error.value = '';
 
   try {
-    const data: Partial<Person> = {
+    const data: Partial<User> = {
       first_name: form.first_name,
       last_name: form.last_name,
-      status: form.status as Person['status'],
+      status: form.status as User['status'],
     };
 
     if (form.phone) data.phone = form.phone;
@@ -191,8 +191,8 @@ async function handleSubmit() {
     if (form.telegram_username) data.telegram_username = form.telegram_username;
     if (form.telegram_id) data.telegram_id = form.telegram_id;
 
-    const result = await api.createPerson(data);
-    router.push(`/persons/${(result as Person).id}`);
+    const result = await api.createUser(data);
+    router.push(`/users/${(result as User).id}`);
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Ошибка при создании клиента';
   } finally {

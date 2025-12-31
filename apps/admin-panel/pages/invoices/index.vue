@@ -220,7 +220,7 @@ async function loadInvoices() {
     const result = await api.getInvoices({
       filter: queryFilter,
       search: search.value || undefined,
-      sort: ['-date_created'],
+      sort: '-date_created',
       limit: perPage,
       offset: (currentPage.value - 1) * perPage,
     });

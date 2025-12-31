@@ -10,7 +10,7 @@ import BaseBadge from './BaseBadge.vue';
 
 interface Props {
   status: string;
-  type?: 'person' | 'contract' | 'account' | 'subscription' | 'payment' | 'invoice';
+  type?: 'person' | 'user' | 'contract' | 'account' | 'subscription' | 'payment' | 'invoice';
   showDot?: boolean;
 }
 

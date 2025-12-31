@@ -142,7 +142,7 @@ async function loadAccounts() {
     const result = await api.getAccounts({
       filter,
       search: search.value || undefined,
-      sort: ['-date_created'],
+      sort: '-date_created',
       limit: perPage,
       offset: (currentPage.value - 1) * perPage,
     });

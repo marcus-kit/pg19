@@ -33,7 +33,7 @@
               @click="selectAccount(account)"
             >
               <div>
-                <p class="font-medium text-gray-900">{{ account.account_number }}</p>
+                <p class="font-medium text-gray-900">Счёт #{{ account.contract_number }}-1</p>
                 <p class="text-sm text-gray-500">{{ getAccountAddress(account) || 'Адрес не указан' }}</p>
               </div>
               <StatusBadge :status="account.status" type="account" />
@@ -41,7 +41,7 @@
           </div>
           <div v-if="selectedAccount" class="mt-2 p-3 bg-primary-50 rounded-lg flex items-center justify-between">
             <div>
-              <p class="font-medium text-primary-700">{{ selectedAccount.account_number }}</p>
+              <p class="font-medium text-primary-700">Счёт #{{ selectedAccount.contract_number }}-1</p>
               <p class="text-sm text-primary-600">Баланс: {{ formatMoney(selectedAccount.balance) }}</p>
             </div>
             <button type="button" class="text-primary-500 hover:text-primary-700" @click="clearAccount">
@@ -73,21 +73,24 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <BaseInput
             v-model="form.period_start"
-            type="date"
-            label="Начало периода"
+            type="text"
+            label="Начало периода (ГГГГ-ММ-ДД)"
+            placeholder="2024-01-01"
           />
           <BaseInput
             v-model="form.period_end"
-            type="date"
-            label="Конец периода"
+            type="text"
+            label="Конец периода (ГГГГ-ММ-ДД)"
+            placeholder="2024-01-31"
           />
         </div>
 
         <!-- Due Date -->
         <BaseInput
           v-model="form.due_date"
-          type="date"
-          label="Срок оплаты"
+          type="text"
+          label="Срок оплаты (ГГГГ-ММ-ДД)"
+          placeholder="2024-02-15"
         />
 
         <!-- Status -->
@@ -121,7 +124,7 @@ import {
   formatMoney,
   formatAddress,
 } from '@pg19/ui';
-import type { Account } from '@pg19/types';
+import type { Account, Invoice } from '@pg19/types';
 
 definePageMeta({
   middleware: 'auth',
@@ -201,14 +204,14 @@ async function handleSubmit() {
   isSubmitting.value = true;
 
   try {
-    const invoiceData = {
+    const invoiceData: Partial<Invoice> = {
       account_id: selectedAccount.value.id,
       amount: Math.round(parseFloat(form.amount) * 100),
       description: form.description || null,
       period_start: form.period_start || null,
       period_end: form.period_end || null,
       due_date: form.due_date || null,
-      status: form.status,
+      status: form.status as Invoice['status'],
       issued_at: form.status === 'issued' ? new Date().toISOString() : null,
     };
 

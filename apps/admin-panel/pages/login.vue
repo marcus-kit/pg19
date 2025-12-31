@@ -106,26 +106,25 @@ async function handleSubmit() {
   error.value = '';
 
   try {
-    const result = await api.login(form.email.trim(), form.password);
+    // Use Supabase Auth directly through the client
+    const { data, error: authError } = await api.client.auth.signInWithPassword({
+      email: form.email.trim(),
+      password: form.password,
+    });
 
-    if (result.access_token) {
-      // Get user info with the token
-      let user: { id: string; email: string; first_name?: string; last_name?: string } | null = null;
-      try {
-        user = await api.getCurrentUser(result.access_token) as typeof user;
-      } catch {
-        // Ignore error getting user details
-      }
+    if (authError) {
+      throw new Error(authError.message);
+    }
 
-      // Set auth with user info
+    if (data.session?.access_token && data.user) {
       adminAuthStore.setAuth(
         {
-          id: user?.id || '',
-          email: user?.email || form.email,
-          first_name: user?.first_name,
-          last_name: user?.last_name,
+          id: data.user.id,
+          email: data.user.email || form.email,
+          first_name: data.user.user_metadata?.first_name,
+          last_name: data.user.user_metadata?.last_name,
         },
-        result.access_token
+        data.session.access_token
       );
 
       router.push('/dashboard');

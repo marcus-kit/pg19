@@ -99,7 +99,7 @@ const adminEmail = computed(() => adminAuthStore.user?.email || 'Admin');
 
 const navItems = [
   { to: '/dashboard', label: 'Главная', icon: HomeIcon },
-  { to: '/persons', label: 'Клиенты', icon: UsersIcon },
+  { to: '/users', label: 'Клиенты', icon: UsersIcon },
   { to: '/accounts', label: 'Учётные записи', icon: CreditCardIcon },
   { to: '/invoices', label: 'Счета', icon: DocumentTextIcon },
   { to: '/services', label: 'Сервисы', icon: BoltIcon },

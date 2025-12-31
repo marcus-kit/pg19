@@ -182,8 +182,9 @@
         />
         <BaseInput
           v-model="editForm.due_date"
-          type="date"
-          label="Срок оплаты"
+          type="text"
+          label="Срок оплаты (ГГГГ-ММ-ДД)"
+          placeholder="2024-12-31"
         />
         <BaseInput
           v-model="editForm.amount"
@@ -328,14 +329,14 @@ watch(showEditModal, (isOpen) => {
 
 onMounted(async () => {
   try {
-    const id = route.params.id as string;
+    const id = Number(route.params.id);
     invoice.value = await api.getInvoice(id) as unknown as Invoice;
 
     // Load related payments
     if (invoice.value?.account_id) {
       const payments = await api.getPayments({
         filter: { account_id: { _eq: invoice.value.account_id } },
-        sort: ['-date_created'],
+        sort: '-date_created',
         limit: 10,
       }) as unknown as Payment[];
       relatedPayments.value = payments;

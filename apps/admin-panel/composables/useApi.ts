@@ -1,6 +1,5 @@
 import type {
-  Person,
-  Contract,
+  User,
   Account,
   Service,
   Subscription,

@@ -112,7 +112,7 @@
         >
           <div>
             <NuxtLink :to="`/accounts/${debtor.id}`" class="font-medium text-gray-900 hover:text-primary-500">
-              {{ debtor.account_number }}
+              Счёт #{{ debtor.contract_number }}-1
             </NuxtLink>
             <p class="text-sm text-gray-500">{{ debtor.address_full || formatDebtorAddress(debtor) }}</p>
           </div>
@@ -302,7 +302,7 @@ async function loadDebtors() {
         balance: { _lt: 0 },
         status: { _neq: 'closed' },
       },
-      sort: ['balance'],
+      sort: 'balance',
       limit: 50,
     });
 

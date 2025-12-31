@@ -2,7 +2,7 @@
   <div>
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-900">Клиенты</h1>
-      <NuxtLink to="/persons/create">
+      <NuxtLink to="/users/create">
         <BaseButton variant="primary">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -17,7 +17,7 @@
       <div class="flex flex-col md:flex-row gap-4">
         <SearchInput
           v-model="search"
-          placeholder="Поиск по ФИО, телефону, номеру..."
+          placeholder="Поиск по ФИО, телефону, email..."
           class="flex-1"
           @search="handleSearch"
         />
@@ -25,7 +25,7 @@
           v-model="statusFilter"
           :options="statusOptions"
           class="md:w-48"
-          @change="loadPersons"
+          @change="loadUsers"
         />
       </div>
     </BaseCard>
@@ -34,7 +34,7 @@
     <BaseCard :padding="false">
       <BaseTable
         :columns="columns"
-        :data="persons"
+        :data="users"
         :loading="isLoading"
         row-key="id"
         clickable
@@ -50,7 +50,7 @@
             </div>
             <div>
               <p class="font-medium text-gray-900">{{ formatFullName(row) }}</p>
-              <p class="text-xs text-gray-500">{{ row.customer_number }}</p>
+              <p class="text-xs text-gray-500">ID: {{ row.id }}</p>
             </div>
           </div>
         </template>
@@ -64,7 +64,7 @@
         </template>
 
         <template #cell-status="{ row }">
-          <StatusBadge :status="row.status" type="person" />
+          <StatusBadge :status="row.status" type="user" />
         </template>
 
         <template #cell-created_at="{ row }">
@@ -73,7 +73,7 @@
 
         <template #cell-actions="{ row }">
           <div class="flex items-center gap-2">
-            <NuxtLink :to="`/persons/${row.id}`">
+            <NuxtLink :to="`/users/${row.id}`">
               <BaseButton variant="ghost" size="sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -108,7 +108,7 @@ import {
   formatPhone,
   formatDate,
 } from '@pg19/ui';
-import type { Person } from '@pg19/types';
+import type { User } from '@pg19/types';
 
 definePageMeta({
   middleware: 'auth',
@@ -117,7 +117,7 @@ definePageMeta({
 const router = useRouter();
 const api = useApi();
 
-const persons = ref<Person[]>([]);
+const users = ref<User[]>([]);
 const isLoading = ref(true);
 const search = ref('');
 const statusFilter = ref('');
@@ -143,73 +143,58 @@ const statusOptions = [
   { value: 'terminated', label: 'Расторгнутые' },
 ];
 
-function getInitials(person: Person): string {
-  const first = person.first_name?.[0] || '';
-  const last = person.last_name?.[0] || '';
+function getInitials(user: User): string {
+  const first = user.first_name?.[0] || '';
+  const last = user.last_name?.[0] || '';
   return (first + last).toUpperCase() || '?';
 }
 
-function handleRowClick(row: Person) {
-  router.push(`/persons/${row.id}`);
+function handleRowClick(row: User) {
+  router.push(`/users/${row.id}`);
 }
 
-function handleSearch(query: string) {
+function handleSearch() {
   currentPage.value = 1;
-  loadPersons();
+  loadUsers();
 }
 
 function handleSort(key: string, order: 'asc' | 'desc') {
   sortKey.value = key;
   sortOrder.value = order;
-  loadPersons();
+  loadUsers();
 }
 
 watch([currentPage, statusFilter], () => {
-  loadPersons();
+  loadUsers();
 });
 
-async function loadPersons() {
+async function loadUsers() {
   isLoading.value = true;
 
   try {
-    const filter: Record<string, unknown> = {};
+    const sort = sortKey.value
+      ? (sortOrder.value === 'desc' ? '-' : '') + (sortKey.value === 'name' ? 'last_name' : sortKey.value)
+      : '-created_at';
 
-    if (statusFilter.value) {
-      filter.status = { _eq: statusFilter.value };
-    }
-
-    const sort: string[] = [];
-    if (sortKey.value) {
-      const prefix = sortOrder.value === 'desc' ? '-' : '';
-      const fieldMap: Record<string, string> = {
-        name: 'last_name',
-        created_at: 'created_at',
-      };
-      sort.push(prefix + (fieldMap[sortKey.value] || sortKey.value));
-    } else {
-      sort.push('-created_at');
-    }
-
-    const result = await api.getPersons({
-      filter,
-      sort,
+    const result = await api.getUsers({
       search: search.value || undefined,
+      sort,
       limit: perPage,
       offset: (currentPage.value - 1) * perPage,
     });
 
-    persons.value = result as unknown as Person[];
-    total.value = persons.value.length < perPage
-      ? (currentPage.value - 1) * perPage + persons.value.length
+    users.value = result as User[];
+    total.value = users.value.length < perPage
+      ? (currentPage.value - 1) * perPage + users.value.length
       : currentPage.value * perPage + 1;
   } catch (e) {
-    console.error('Failed to load persons:', e);
+    console.error('Failed to load users:', e);
   } finally {
     isLoading.value = false;
   }
 }
 
 onMounted(() => {
-  loadPersons();
+  loadUsers();
 });
 </script>

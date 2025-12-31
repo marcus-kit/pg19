@@ -98,8 +98,8 @@
             <div>
               <p class="text-sm font-medium text-gray-900">{{ invoice.invoice_number }}</p>
               <p class="text-xs text-gray-500">
-                Срок: {{ formatDate(invoice.due_date) }}
-                <span class="text-accent-pink ml-1">({{ getDaysOverdue(invoice.due_date) }} дн.)</span>
+                Срок: {{ invoice.due_date ? formatDate(invoice.due_date) : '—' }}
+                <span v-if="invoice.due_date" class="text-accent-pink ml-1">({{ getDaysOverdue(invoice.due_date) }} дн.)</span>
               </p>
             </div>
             <div class="text-right">
@@ -164,12 +164,12 @@
       <!-- New Clients -->
       <BaseCard title="Новые клиенты">
         <template #header-actions>
-          <NuxtLink to="/persons" class="text-sm text-primary-500 hover:text-primary-600">
+          <NuxtLink to="/users" class="text-sm text-primary-500 hover:text-primary-600">
             Все клиенты
           </NuxtLink>
         </template>
 
-        <div v-if="isLoadingPersons" class="space-y-4">
+        <div v-if="isLoadingUsers" class="space-y-4">
           <div v-for="i in 5" :key="i" class="animate-pulse flex justify-between py-2">
             <div class="space-y-2">
               <div class="h-3 w-32 bg-gray-200 rounded" />
@@ -179,22 +179,22 @@
           </div>
         </div>
 
-        <div v-else-if="recentPersons.length === 0" class="text-center py-8 text-gray-500">
+        <div v-else-if="recentUsers.length === 0" class="text-center py-8 text-gray-500">
           Нет новых клиентов
         </div>
 
         <div v-else class="space-y-2">
           <NuxtLink
-            v-for="person in recentPersons"
-            :key="person.id"
-            :to="`/persons/${person.id}`"
+            v-for="user in recentUsers"
+            :key="user.id"
+            :to="`/users/${user.id}`"
             class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 hover:bg-gray-50 -mx-2 px-2 rounded transition-colors"
           >
             <div>
-              <p class="text-sm font-medium text-gray-900">{{ formatFullName(person) }}</p>
-              <p class="text-xs text-gray-500">ID: {{ person.id }}</p>
+              <p class="text-sm font-medium text-gray-900">{{ formatFullName(user) }}</p>
+              <p class="text-xs text-gray-500">ID: {{ user.id }}</p>
             </div>
-            <StatusBadge :status="person.status" type="person" />
+            <StatusBadge :status="user.status" type="user" />
           </NuxtLink>
         </div>
       </BaseCard>
@@ -246,7 +246,7 @@
 
 <script setup lang="ts">
 import { BaseCard, BalanceDisplay, StatusBadge, formatMoney, formatFullName, formatPaymentProvider, formatDate } from '@pg19/ui';
-import type { Person, Payment, Account, Invoice, DashboardStats } from '@pg19/types';
+import type { User, Payment, Account, Invoice, DashboardStats } from '@pg19/types';
 
 definePageMeta({
   middleware: 'auth',
@@ -263,7 +263,7 @@ const stats = ref<DashboardStats>({
 });
 
 const recentPayments = ref<Payment[]>([]);
-const recentPersons = ref<Person[]>([]);
+const recentUsers = ref<User[]>([]);
 const overdueInvoices = ref<Invoice[]>([]);
 const blockedAccounts = ref<Account[]>([]);
 const unpaidInvoicesCount = ref(0);
@@ -271,7 +271,7 @@ const totalAmountToPay = ref(0);
 
 const isLoading = ref(true);
 const isLoadingPayments = ref(true);
-const isLoadingPersons = ref(true);
+const isLoadingUsers = ref(true);
 const isLoadingInvoices = ref(true);
 const isLoadingAccounts = ref(true);
 
@@ -285,7 +285,7 @@ function getDaysOverdue(dueDate: string | null): number {
 
 onMounted(async () => {
   try {
-    const [dashboardStats, payments, persons, unpaidInvoices, blockedAccountsData] = await Promise.all([
+    const [dashboardStats, payments, users, unpaidInvoices, blockedAccountsData] = await Promise.all([
       api.getDashboardStats(),
       api.getPayments({ limit: 5 }),
       api.getUsers({ sort: '-created_at', limit: 5 }),
@@ -295,7 +295,7 @@ onMounted(async () => {
 
     stats.value = dashboardStats;
     recentPayments.value = payments as unknown as Payment[];
-    recentPersons.value = persons as unknown as Person[];
+    recentUsers.value = users as User[];
     blockedAccounts.value = blockedAccountsData as unknown as Account[];
 
     const invoicesData = unpaidInvoices as unknown as Invoice[];
@@ -310,7 +310,7 @@ onMounted(async () => {
   } finally {
     isLoading.value = false;
     isLoadingPayments.value = false;
-    isLoadingPersons.value = false;
+    isLoadingUsers.value = false;
     isLoadingInvoices.value = false;
     isLoadingAccounts.value = false;
   }
