@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-white shadow-sm border-b border-gray-200">
+  <header class="bg-surface shadow-sm border-b border-border">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center gap-4">
@@ -10,7 +10,7 @@
                 <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
                   <span class="text-white font-bold text-sm">PG</span>
                 </div>
-                <span class="font-semibold text-gray-900">{{ title }}</span>
+                <span class="font-semibold text-content">{{ title }}</span>
               </template>
             </a>
           </slot>
@@ -23,7 +23,7 @@
           <slot name="actions" />
 
           <div v-if="user" class="flex items-center gap-3">
-            <span class="text-sm text-gray-700">{{ user }}</span>
+            <span class="text-sm text-content-secondary">{{ user }}</span>
             <button
               type="button"
               class="text-sm px-3 py-1.5 bg-accent-pink text-white rounded-lg hover:bg-pink-700 transition-colors"

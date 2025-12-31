@@ -26,8 +26,8 @@
           label="ФИО"
           placeholder="Иванов Иван"
           :error="errors.fullName"
-          autocomplete="current-password"
-          name="password"
+          autocomplete="name"
+          name="fullname"
           type="text"
           required
         />

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-50">
+  <div class="min-h-screen flex flex-col">
     <AppHeader
       title="Личный кабинет"
       logo-src="/images/logo.png"
@@ -14,12 +14,16 @@
           class="hidden md:flex px-3 py-2 text-sm font-medium rounded-lg transition-colors"
           :class="[
             $route.path === item.to || $route.path.startsWith(item.to + '/')
-              ? 'bg-primary-50 text-primary-700'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
+              : 'text-content-secondary hover:text-content hover:bg-surface-sunken'
           ]"
         >
           {{ item.label }}
         </NuxtLink>
+      </template>
+
+      <template #actions>
+        <ThemeToggle />
       </template>
     </AppHeader>
 
@@ -39,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { AppHeader, AppFooter, formatFullName } from '@pg19/ui';
+import { AppHeader, AppFooter, ThemeToggle, formatFullName } from '@pg19/ui';
 import { useAuthStore } from '~/stores/auth';
 import MobileNavigation from '~/components/MobileNavigation.vue';
 
