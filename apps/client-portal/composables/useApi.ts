@@ -40,7 +40,7 @@ export function useApi() {
     async getSubscriptions(accountId: number) {
       const { data, error } = await supabase
         .from('subscriptions')
-        .select('*, service_id(*)')
+        .select('*, service:service_id(*)')
         .eq('account_id', accountId)
         .eq('status', 'active');
 

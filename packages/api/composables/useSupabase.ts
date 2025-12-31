@@ -58,7 +58,7 @@ export function useSupabase(client: SupabaseClient) {
 
       const { data: account, error: accountError } = await client
         .from('accounts')
-        .select('*, subscriptions(*, service_id(*)), transactions(*), payments(*), invoices(*)')
+        .select('*, subscriptions(*, service:service_id(*)), transactions(*), payments(*), invoices(*)')
         .eq('user_id', id)
         .single();
       if (accountError && accountError.code !== 'PGRST116') throw accountError;
@@ -121,7 +121,7 @@ export function useSupabase(client: SupabaseClient) {
     async getAccount(id: number) {
       const { data, error } = await client
         .from('accounts')
-        .select('*, user_id(*), subscriptions(*, service_id(*)), transactions(*), payments(*), invoices(*)')
+        .select('*, user_id(*), subscriptions(*, service:service_id(*)), transactions(*), payments(*), invoices(*)')
         .eq('id', id)
         .single();
       if (error) throw error;
@@ -253,7 +253,7 @@ export function useSupabase(client: SupabaseClient) {
 
     // ============ Subscriptions ============
     async getSubscriptions(params?: QueryParams) {
-      let query = client.from('subscriptions').select('*, service_id(*)');
+      let query = client.from('subscriptions').select('*, service:service_id(*)');
 
       if (params?.sort) query = query.order(params.sort);
       if (params?.limit) query = query.limit(params.limit);
