@@ -13,12 +13,12 @@
               <div>
                 <p class="font-medium text-gray-900">Telegram</p>
                 <p class="text-sm text-gray-500">
-                  {{ authStore.person?.telegram_username ? '@' + authStore.person.telegram_username : 'Не привязан' }}
+                  {{ authStore.user?.telegram_username ? '@' + authStore.user.telegram_username : 'Не привязан' }}
                 </p>
               </div>
             </div>
             <button
-              v-if="authStore.person?.telegram_username"
+              v-if="authStore.user?.telegram_username"
               class="text-sm text-red-500 hover:text-red-600"
             >
               Отвязать

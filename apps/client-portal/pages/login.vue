@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { BaseCard } from '@pg19/ui';
 import { useAuthStore } from '~/stores/auth';
-import type { Person, Account } from '@pg19/types';
+import type { User, Account } from '@pg19/types';
 
 // Icons as inline components
 const ContractIcon = {
@@ -109,7 +109,7 @@ const tabs = [
 
 function handleAuthSuccess(data: unknown) {
   const authData = data as {
-    person?: Person;
+    person?: User;  // API returns 'person' for backward compatibility
     account?: Account;
   };
   if (authData.person && authData.account) {

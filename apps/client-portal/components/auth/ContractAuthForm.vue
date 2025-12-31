@@ -53,7 +53,7 @@
 import { BaseInput, BaseButton, BaseAlert } from '@pg19/ui';
 
 const emit = defineEmits<{
-  success: [data: { person: unknown; contract: unknown; account: unknown }];
+  success: [data: { person: unknown; account: unknown }];
 }>();
 
 const api = useApi();
@@ -103,7 +103,6 @@ async function handleSubmit() {
 
     emit('success', {
       person: result.person,
-      contract: result.contract,
       account: result.account,
     });
   } catch (e: unknown) {

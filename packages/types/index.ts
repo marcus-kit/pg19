@@ -23,7 +23,7 @@ export interface User {
 
 export type UserStatus = 'active' | 'suspended' | 'terminated';
 
-// Alias for backward compatibility
+/** @deprecated Use User instead */
 export type Person = User;
 
 // Account (Лицевой счёт + данные договора)
@@ -175,8 +175,6 @@ export interface ClientAuthState {
   isAuthenticated: boolean;
   user: User | null;
   account: Account | null;
-  /** @deprecated Use account instead. Kept for backward compatibility */
-  contract?: Contract | null;
 }
 
 // Dashboard stats for admin panel
@@ -190,10 +188,8 @@ export interface DashboardStats {
 
 // Auth data returned on successful authentication
 export interface AuthData {
-  person: User;   // Keep as 'person' for API compatibility
+  person: User;   // API returns 'person' for backward compatibility, but it's a User
   account: Account;
-  /** @deprecated Use account instead. Account now contains contract data */
-  contract?: Contract;
 }
 
 // Phone auth types

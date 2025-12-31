@@ -43,7 +43,7 @@
             </div>
             <div>
               <dd class="text-lg font-semibold text-gray-900">{{ fullName }}</dd>
-              <dt class="text-sm text-gray-500">Договор #{{ authStore.contract?.contract_number }}</dt>
+              <dt class="text-sm text-gray-500">Договор #{{ authStore.account?.contract_number }}</dt>
             </div>
           </div>
 
@@ -53,27 +53,27 @@
                 <dt class="text-sm text-gray-500 mb-1">Телефон</dt>
                 <dd class="text-gray-900 flex items-center gap-2">
                   <PhoneIcon class="w-4 h-4 text-gray-400" />
-                  {{ authStore.person?.phone ? formatPhone(authStore.person.phone) : 'Не указан' }}
+                  {{ authStore.user?.phone ? formatPhone(authStore.user.phone) : 'Не указан' }}
                 </dd>
               </div>
               <div>
                 <dt class="text-sm text-gray-500 mb-1">Email</dt>
                 <dd class="text-gray-900 flex items-center gap-2">
                   <EmailIcon class="w-4 h-4 text-gray-400" />
-                  {{ authStore.person?.email || 'Не указан' }}
+                  {{ authStore.user?.email || 'Не указан' }}
                 </dd>
               </div>
               <div>
                 <dt class="text-sm text-gray-500 mb-1">Telegram</dt>
                 <dd class="text-gray-900 flex items-center gap-2">
                   <TelegramIcon class="w-4 h-4 text-gray-400" />
-                  {{ authStore.person?.telegram_username ? '@' + authStore.person.telegram_username : 'Не привязан' }}
+                  {{ authStore.user?.telegram_username ? '@' + authStore.user.telegram_username : 'Не привязан' }}
                 </dd>
               </div>
               <div>
                 <dt class="text-sm text-gray-500 mb-1">Статус</dt>
                 <dd>
-                  <StatusBadge :status="authStore.person?.status || 'active'" type="person" />
+                  <StatusBadge :status="authStore.user?.status || 'active'" type="person" />
                 </dd>
               </div>
             </div>
@@ -87,14 +87,14 @@
           <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div>
               <dt class="text-sm text-gray-500">Номер договора</dt>
-              <dd class="text-lg font-semibold text-gray-900">{{ authStore.contract?.contract_number }}</dd>
+              <dd class="text-lg font-semibold text-gray-900">{{ authStore.account?.contract_number }}</dd>
             </div>
-            <StatusBadge :status="authStore.contract?.status || 'active'" type="contract" />
+            <StatusBadge :status="authStore.account?.contract_status || 'active'" type="contract" />
           </div>
 
-          <div v-if="authStore.contract?.start_date">
+          <div v-if="authStore.account?.start_date">
             <dt class="text-sm text-gray-500">Дата заключения</dt>
-            <dd class="text-gray-900">{{ formatDate(authStore.contract.start_date) }}</dd>
+            <dd class="text-gray-900">{{ formatDate(authStore.account.start_date) }}</dd>
           </div>
 
           <div v-if="contractAddress">
@@ -177,14 +177,14 @@
                   <EmailIcon class="w-5 h-5 text-gray-500" />
                   <div>
                     <p class="font-medium text-gray-900">Email</p>
-                    <p class="text-sm text-gray-500">{{ authStore.person?.email || 'Не указан' }}</p>
+                    <p class="text-sm text-gray-500">{{ authStore.user?.email || 'Не указан' }}</p>
                   </div>
                 </div>
                 <input
                   v-model="notifications.email"
                   type="checkbox"
                   class="w-5 h-5 text-primary-500 rounded focus:ring-primary-500"
-                  :disabled="!authStore.person?.email"
+                  :disabled="!authStore.user?.email"
                 />
               </label>
 
@@ -193,14 +193,14 @@
                   <PhoneIcon class="w-5 h-5 text-gray-500" />
                   <div>
                     <p class="font-medium text-gray-900">SMS</p>
-                    <p class="text-sm text-gray-500">{{ authStore.person?.phone ? formatPhone(authStore.person.phone) : 'Не указан' }}</p>
+                    <p class="text-sm text-gray-500">{{ authStore.user?.phone ? formatPhone(authStore.user.phone) : 'Не указан' }}</p>
                   </div>
                 </div>
                 <input
                   v-model="notifications.sms"
                   type="checkbox"
                   class="w-5 h-5 text-primary-500 rounded focus:ring-primary-500"
-                  :disabled="!authStore.person?.phone"
+                  :disabled="!authStore.user?.phone"
                 />
               </label>
 
@@ -210,7 +210,7 @@
                   <div>
                     <p class="font-medium text-gray-900">Telegram</p>
                     <p class="text-sm text-gray-500">
-                      {{ authStore.person?.telegram_username ? '@' + authStore.person.telegram_username : 'Не привязан' }}
+                      {{ authStore.user?.telegram_username ? '@' + authStore.user.telegram_username : 'Не привязан' }}
                     </p>
                   </div>
                 </div>
@@ -218,7 +218,7 @@
                   v-model="notifications.telegram"
                   type="checkbox"
                   class="w-5 h-5 text-primary-500 rounded focus:ring-primary-500"
-                  :disabled="!authStore.person?.telegram_username"
+                  :disabled="!authStore.user?.telegram_username"
                 />
               </label>
 
@@ -361,31 +361,31 @@ const notificationTypes: { id: NotificationTypeId; label: string; description: s
 ];
 
 const editForm = reactive({
-  phone: authStore.person?.phone || '',
-  email: authStore.person?.email || '',
+  phone: authStore.user?.phone || '',
+  email: authStore.user?.email || '',
 });
 
 // Computed
 const fullName = computed(() => {
-  if (!authStore.person) return '';
-  return formatFullName(authStore.person);
+  if (!authStore.user) return '';
+  return formatFullName(authStore.user);
 });
 
 const initials = computed(() => {
-  if (!authStore.person) return '';
-  const first = authStore.person.first_name?.[0] || '';
-  const last = authStore.person.last_name?.[0] || '';
+  if (!authStore.user) return '';
+  const first = authStore.user.first_name?.[0] || '';
+  const last = authStore.user.last_name?.[0] || '';
   return (last + first).toUpperCase();
 });
 
 const contractAddress = computed(() => {
-  if (!authStore.contract) return '';
-  if (authStore.contract.address_full) return authStore.contract.address_full;
+  if (!authStore.account) return '';
+  if (authStore.account.address_full) return authStore.account.address_full;
   return formatAddress({
-    city: authStore.contract.address_city,
-    street: authStore.contract.address_street,
-    building: authStore.contract.address_building,
-    apartment: authStore.contract.address_apartment,
+    city: authStore.account.address_city,
+    street: authStore.account.address_street,
+    building: authStore.account.address_building,
+    apartment: authStore.account.address_apartment,
   });
 });
 

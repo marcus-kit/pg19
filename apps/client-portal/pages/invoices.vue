@@ -552,7 +552,7 @@ function downloadInvoice(invoice: Invoice) {
 
 function emailInvoice(invoice: Invoice) {
   emailModalInvoice.value = invoice;
-  emailAddress.value = authStore.person?.email || '';
+  emailAddress.value = authStore.user?.email || '';
 }
 
 function sendEmail() {

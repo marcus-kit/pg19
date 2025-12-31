@@ -76,11 +76,11 @@ const unreadCount = computed(() => news.value.filter(n => !n.is_read).length);
 const displayedNews = computed(() => news.value.slice(0, 5));
 
 async function loadNews() {
-  if (!authStore.person?.id) return;
+  if (!authStore.user?.id) return;
 
   isLoading.value = true;
   try {
-    news.value = await api.getNews(authStore.person.id, { limit: 10 });
+    news.value = await api.getNews(authStore.user.id, { limit: 10 });
   } catch (error) {
     console.error('Failed to load news:', error);
   } finally {
@@ -93,9 +93,9 @@ async function openNews(item: News) {
   showModal.value = true;
 
   // Mark as read
-  if (!item.is_read && authStore.person?.id) {
+  if (!item.is_read && authStore.user?.id) {
     try {
-      await api.markNewsAsRead(item.id, authStore.person.id);
+      await api.markNewsAsRead(item.id, authStore.user.id);
       // Update local state
       const newsItem = news.value.find(n => n.id === item.id);
       if (newsItem) {

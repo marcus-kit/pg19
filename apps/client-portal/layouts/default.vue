@@ -47,8 +47,8 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const userName = computed(() => {
-  if (authStore.person) {
-    return formatFullName(authStore.person);
+  if (authStore.user) {
+    return formatFullName(authStore.user);
   }
   return '';
 });
