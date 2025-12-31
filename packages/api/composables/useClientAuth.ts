@@ -1,14 +1,10 @@
 import type {
-  Person,
-  Contract,
-  Account,
   AuthData,
   PhoneAuthInitResponse,
   PhoneAuthCheckResponse,
   EmailAuthSendResponse,
   TelegramAuthData,
 } from '@pg19/types';
-import type { SupabaseClient } from '../index';
 
 export function useClientAuth(supabaseUrl: string) {
   const functionsUrl = `${supabaseUrl}/functions/v1`;

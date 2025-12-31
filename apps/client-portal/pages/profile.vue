@@ -142,8 +142,8 @@
         <dl class="space-y-4">
           <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
             <div>
-              <dt class="text-sm text-gray-500">Номер счёта</dt>
-              <dd class="text-lg font-semibold text-gray-900">{{ authStore.account?.account_number }}</dd>
+              <dt class="text-sm text-gray-500">Лицевой счёт</dt>
+              <dd class="text-lg font-semibold text-gray-900">{{ authStore.account?.contract_number }}-1</dd>
             </div>
             <BalanceDisplay :amount="authStore.currentBalance" size="lg" />
           </div>
@@ -158,10 +158,6 @@
             <div v-if="authStore.account?.credit_limit">
               <dt class="text-sm text-gray-500">Кредитный лимит</dt>
               <dd class="text-gray-900">{{ formatMoney(authStore.account.credit_limit) }}</dd>
-            </div>
-            <div v-if="authStore.account?.next_charge_date">
-              <dt class="text-sm text-gray-500">Следующее списание</dt>
-              <dd class="text-gray-900">{{ formatDate(authStore.account.next_charge_date) }}</dd>
             </div>
           </div>
         </dl>

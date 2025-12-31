@@ -1,6 +1,5 @@
 import type {
   User,
-  Contract,
   Account,
   Service,
   Subscription,
@@ -25,10 +24,10 @@ export function useSupabase(client: SupabaseClient) {
 
     // ============ Users ============
     async getUsers(params?: QueryParams) {
-      let query = client.from('users').select('*, contracts(*)');
+      let query = client.from('users').select('*');
 
       if (params?.search) {
-        query = query.or(`customer_number.ilike.%${params.search}%,first_name.ilike.%${params.search}%,last_name.ilike.%${params.search}%,email.ilike.%${params.search}%,phone.ilike.%${params.search}%`);
+        query = query.or(`first_name.ilike.%${params.search}%,last_name.ilike.%${params.search}%,email.ilike.%${params.search}%,phone.ilike.%${params.search}%,full_name.ilike.%${params.search}%`);
       }
       if (params?.sort) query = query.order(params.sort);
       if (params?.limit) query = query.limit(params.limit);
@@ -42,11 +41,29 @@ export function useSupabase(client: SupabaseClient) {
     async getUser(id: number) {
       const { data, error } = await client
         .from('users')
-        .select('*, contracts(*, accounts(*))')
+        .select('*')
         .eq('id', id)
         .single();
       if (error) throw error;
       return data;
+    },
+
+    async getUserWithAccount(id: number) {
+      const { data: user, error: userError } = await client
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (userError) throw userError;
+
+      const { data: account, error: accountError } = await client
+        .from('accounts')
+        .select('*, subscriptions(*, service_id(*)), transactions(*), payments(*), invoices(*)')
+        .eq('user_id', id)
+        .single();
+      if (accountError && accountError.code !== 'PGRST116') throw accountError;
+
+      return { ...user, account };
     },
 
     async createUser(data: Partial<User>) {
@@ -78,73 +95,20 @@ export function useSupabase(client: SupabaseClient) {
     async searchUsers(query: string) {
       const { data, error } = await client
         .from('users')
-        .select('*, contracts(contract_number, id)')
-        .or(`customer_number.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%`)
+        .select('*')
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%,phone.ilike.%${query}%,full_name.ilike.%${query}%`)
         .limit(20);
       if (error) throw error;
       return data;
     },
 
-    // ============ Contracts ============
-    async getContracts(params?: QueryParams) {
-      let query = client.from('contracts').select('*, person_id(*), accounts(*)');
-
-      if (params?.sort) query = query.order(params.sort);
-      if (params?.limit) query = query.limit(params.limit);
-      if (params?.offset) query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-
-    async getContract(id: number) {
-      const { data, error } = await client
-        .from('contracts')
-        .select('*, person_id(*), accounts(*)')
-        .eq('id', id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-
-    async getContractByNumber(contractNumber: string) {
-      const { data, error } = await client
-        .from('contracts')
-        .select('*, person_id(*), accounts(*)')
-        .eq('contract_number', contractNumber)
-        .eq('status', 'active')
-        .limit(1)
-        .single();
-      if (error) return null;
-      return data;
-    },
-
-    async createContract(data: Partial<Contract>) {
-      const { data: result, error } = await client
-        .from('contracts')
-        .insert(data)
-        .select()
-        .single();
-      if (error) throw error;
-      return result;
-    },
-
-    async updateContract(id: number, data: Partial<Contract>) {
-      const { data: result, error } = await client
-        .from('contracts')
-        .update(data)
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return result;
-    },
-
-    // ============ Accounts ============
+    // ============ Accounts (includes contract data) ============
     async getAccounts(params?: QueryParams) {
-      let query = client.from('accounts').select('*, contract_id(*, person_id(*))');
+      let query = client.from('accounts').select('*, user_id(*)');
 
+      if (params?.search) {
+        query = query.or(`contract_number.ilike.%${params.search}%,address_full.ilike.%${params.search}%`);
+      }
       if (params?.sort) query = query.order(params.sort);
       if (params?.limit) query = query.limit(params.limit);
       if (params?.offset) query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
@@ -157,11 +121,32 @@ export function useSupabase(client: SupabaseClient) {
     async getAccount(id: number) {
       const { data, error } = await client
         .from('accounts')
-        .select('*, contract_id(*, person_id(*)), subscriptions(*, service_id(*)), transactions(*), payments(*), invoices(*)')
+        .select('*, user_id(*), subscriptions(*, service_id(*)), transactions(*), payments(*), invoices(*)')
         .eq('id', id)
         .single();
       if (error) throw error;
       return data;
+    },
+
+    async getAccountByContractNumber(contractNumber: number | string) {
+      const { data, error } = await client
+        .from('accounts')
+        .select('*, user_id(*)')
+        .eq('contract_number', contractNumber)
+        .eq('contract_status', 'active')
+        .single();
+      if (error) return null;
+      return data;
+    },
+
+    async createAccount(data: Partial<Account>) {
+      const { data: result, error } = await client
+        .from('accounts')
+        .insert(data)
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
     },
 
     async updateAccount(id: number, data: Partial<Account>) {

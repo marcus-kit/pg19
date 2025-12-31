@@ -45,7 +45,6 @@ async function importCSV(filePath: string) {
   // Batch insert - разбиваем на батчи по 1000 записей
   const BATCH_SIZE = 1000;
   let totalUsers = 0;
-  let totalContracts = 0;
   let totalAccounts = 0;
 
   for (let i = 0; i < records.length; i += BATCH_SIZE) {
@@ -74,8 +73,8 @@ async function importCSV(filePath: string) {
 
     totalUsers += insertedUsers.length;
 
-    // 2. Insert contracts - связываем с users по индексу в батче
-    const contracts = batch.map((row, index) => {
+    // 2. Insert accounts (now includes contract data)
+    const accounts = batch.map((row, index) => {
       const userId = insertedUsers[index]?.id;
       if (!userId) return null;
 
@@ -87,9 +86,12 @@ async function importCSV(filePath: string) {
       ].filter(Boolean).join(', ') || null;
 
       return {
-        contract_number: row.account_number,
-        person_id: userId,
+        user_id: userId,
+        contract_number: parseInt(row.account_number) || null,
+        contract_status: 'active' as const,
         status: 'active' as const,
+        balance: 0,
+        credit_limit: 0,
         address_city: row.city?.trim() || null,
         address_street: row.street?.trim() || null,
         address_building: row.house?.trim() || null,
@@ -97,28 +99,6 @@ async function importCSV(filePath: string) {
         address_full: fullAddress,
       };
     }).filter(Boolean);
-
-    const { data: insertedContracts, error: contractsError } = await supabase
-      .from('contracts')
-      .insert(contracts)
-      .select('id, contract_number');
-
-    if (contractsError) {
-      console.error('Error inserting contracts:', contractsError);
-      continue;
-    }
-
-    totalContracts += insertedContracts.length;
-
-    // 3. Insert accounts - account_number = contract_number + "-1"
-    const accounts = insertedContracts.map(contract => ({
-      account_number: `${contract.contract_number}-1`,
-      contract_id: contract.id,
-      status: 'active' as const,
-      balance: 0,
-      credit_limit: 0,
-      currency: 'RUB' as const,
-    }));
 
     const { error: accountsError } = await supabase
       .from('accounts')
@@ -131,12 +111,11 @@ async function importCSV(filePath: string) {
 
     totalAccounts += accounts.length;
 
-    console.log(`Batch ${Math.floor(i / BATCH_SIZE) + 1} completed: ${insertedUsers.length} users, ${insertedContracts.length} contracts, ${accounts.length} accounts`);
+    console.log(`Batch ${Math.floor(i / BATCH_SIZE) + 1} completed: ${insertedUsers.length} users, ${accounts.length} accounts`);
   }
 
   console.log(`\nImport completed:`);
   console.log(`  Users: ${totalUsers}`);
-  console.log(`  Contracts: ${totalContracts}`);
   console.log(`  Accounts: ${totalAccounts}`);
 }
 

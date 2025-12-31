@@ -75,15 +75,17 @@ npx tsx import-csv-to-supabase.ts /path/to/data.csv
 ### Backend: Supabase
 
 - **Database**: PostgreSQL with the following key tables:
-  - `users` - Customer data (person records)
-  - `contracts` - One contract per user (1:1 relationship)
-  - `accounts` - One billing account per contract (1:1 relationship)
-  - `services` - Available internet plans/tariffs
-  - `subscriptions` - User's active services
+  - `users` - Customer data (person records, ~22k rows)
+  - `accounts` - Billing accounts with contract data merged (1:1 with users, ~22k rows)
+  - `services` - Available internet plans/tariffs (~241 rows)
+  - `subscriptions` - User's active services (~73k rows)
   - `transactions` - Financial transactions
   - `payments` - Payment records
   - `invoices` - Generated invoices
   - `auth_sessions` - Temporary auth sessions for various login methods
+  - `news` - News/announcements system (RLS enabled)
+  - `news_attachments` - File attachments for news
+  - `news_read_status` - Tracks which users read which news
 
 - **Edge Functions** (Deno runtime at `/supabase/functions/`):
   - `contract-auth` - Auth by contract number + full name
@@ -98,10 +100,10 @@ npx tsx import-csv-to-supabase.ts /path/to/data.csv
 
 - **Key architectural decisions**:
   - All IDs use `BIGINT` (not UUID) for performance
-  - One-to-one relationships: user → contract → account
-  - `account_number` format: `{contract_number}-1` (e.g., "206268-1")
+  - **Simplified structure**: `users` → `accounts` (1:1), contracts merged into accounts
+  - Contract data (contract_number, contract_status, start_date, end_date) lives in `accounts` table
   - `full_name` is auto-generated via trigger from first/last/middle names
-  - No `customer_number` field (removed during refactor)
+  - No separate `contracts` table (merged into accounts)
 
 ### Frontend Apps
 
@@ -119,20 +121,22 @@ All frontends are **Nuxt 3** applications with:
 
 **Admin Panel** (`apps/admin-panel/`):
 - Direct Supabase queries via `@pg19/api` composables
-- CRUD operations for users, contracts, accounts, services
+- CRUD operations for users, accounts, services, subscriptions
 - Dashboard statistics
+- News management
 
 ### Shared Packages
 
 **@pg19/api**:
 - `createSupabaseClient()` - Factory for Supabase client
-- `useSupabase()` - Admin composable with CRUD methods (getUsers, getContracts, etc.)
+- `useSupabase()` - Admin composable with CRUD methods (getUsers, getAccounts, etc.)
 - `useClientAuth()` - Client composable that calls Edge Functions for auth
 
 **@pg19/types**:
-- All TypeScript interfaces (User, Contract, Account, etc.)
-- IMPORTANT: `accounts` is now singular `account` in auth responses (one-to-one)
-- Type hierarchy: `User` → `Contract` → `Account`
+- All TypeScript interfaces (User, Account, Service, Subscription, etc.)
+- `Contract` type kept for backward compatibility (deprecated, use Account)
+- Type hierarchy: `User` → `Account` (1:1 relationship)
+- Account contains contract fields: contract_number, contract_status, start_date, end_date
 
 **@pg19/ui**:
 - Shared Vue components used across apps
@@ -155,7 +159,7 @@ Bot webhook is handled by Edge Function `telegram-bot-webhook`:
    - Telegram: Deep link opens bot, bot verifies and updates session
    - Contract: Direct name verification
 4. **Client polls or submits** verification
-5. **Edge Function returns** `{ person: User, contract: Contract, account: Account }`
+5. **Edge Function returns** `{ person: User, account: Account }` (account includes contract data)
 6. **Client stores** in Pinia + localStorage
 
 ## Deployment
@@ -291,7 +295,9 @@ Workflow: `.github/workflows/deploy.yml`
 
 4. **ID types**: Always use `number` (BIGINT) for IDs, never `string` (UUID removed)
 
-5. **Relationship queries**: Use `.single()` for one-to-one relationships (user/contract/account)
+5. **Relationship queries**: Use `.single()` for one-to-one relationships (user/account)
+
+6. **Account = Contract + Account**: The `accounts` table contains both billing account and contract data. Query accounts directly, not a separate contracts table
 
 ## Supabase Project Details
 

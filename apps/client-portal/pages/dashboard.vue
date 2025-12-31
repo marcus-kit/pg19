@@ -245,7 +245,8 @@ const hasAutopay = ref(false);
 // Computed
 const account = computed(() => authStore.account);
 
-const nextChargeDate = computed(() => account.value?.next_charge_date);
+// next_charge_date removed from schema - calculate from subscription if needed
+const nextChargeDate = computed(() => null);
 
 const currentTariff = computed<Service | null>(() => {
   if (!currentSubscription.value?.service) return null;

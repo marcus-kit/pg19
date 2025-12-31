@@ -14,7 +14,7 @@
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-500">Всего клиентов</p>
             <p v-if="isLoading" class="text-2xl font-bold text-gray-200 animate-pulse">—</p>
-            <p v-else class="text-2xl font-bold text-gray-900">{{ stats.totalPersons }}</p>
+            <p v-else class="text-2xl font-bold text-gray-900">{{ stats.totalUsers }}</p>
           </div>
         </div>
       </BaseCard>
@@ -192,7 +192,7 @@
           >
             <div>
               <p class="text-sm font-medium text-gray-900">{{ formatFullName(person) }}</p>
-              <p class="text-xs text-gray-500">{{ person.customer_number }}</p>
+              <p class="text-xs text-gray-500">ID: {{ person.id }}</p>
             </div>
             <StatusBadge :status="person.status" type="person" />
           </NuxtLink>
@@ -229,7 +229,7 @@
             class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0 hover:bg-gray-50 -mx-2 px-2 rounded transition-colors"
           >
             <div>
-              <p class="text-sm font-medium text-gray-900">{{ account.account_number }}</p>
+              <p class="text-sm font-medium text-gray-900">{{ account.contract_number }}-1</p>
               <p class="text-xs text-gray-500">
                 Заблокирован: {{ account.blocked_at ? formatDate(account.blocked_at) : '—' }}
               </p>
@@ -255,8 +255,8 @@ definePageMeta({
 const api = useApi();
 
 const stats = ref<DashboardStats>({
-  totalPersons: 0,
-  activePersons: 0,
+  totalUsers: 0,
+  activeUsers: 0,
   blockedAccounts: 0,
   totalPositiveBalance: 0,
   activeAccounts: 0,
@@ -287,23 +287,10 @@ onMounted(async () => {
   try {
     const [dashboardStats, payments, persons, unpaidInvoices, blockedAccountsData] = await Promise.all([
       api.getDashboardStats(),
-      api.getPayments({ limit: 5, sort: ['-date_created'] }),
-      api.getPersons({ sort: ['-created_at'], limit: 5 }),
-      api.getInvoices({
-        filter: {
-          _or: [
-            { status: { _eq: 'issued' } },
-            { status: { _eq: 'overdue' } },
-          ],
-        },
-        sort: ['due_date'],
-        limit: 100,
-      }),
-      api.getAccounts({
-        filter: { status: { _eq: 'blocked' } },
-        sort: ['-blocked_at'],
-        limit: 5,
-      }),
+      api.getPayments({ limit: 5 }),
+      api.getUsers({ sort: '-created_at', limit: 5 }),
+      api.getInvoices({ limit: 100 }),
+      api.getAccounts({ limit: 5 }),
     ]);
 
     stats.value = dashboardStats;

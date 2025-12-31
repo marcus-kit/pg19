@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { BaseCard } from '@pg19/ui';
 import { useAuthStore } from '~/stores/auth';
-import type { Person, Contract, Account } from '@pg19/types';
+import type { Person, Account } from '@pg19/types';
 
 // Icons as inline components
 const ContractIcon = {
@@ -110,15 +110,10 @@ const tabs = [
 function handleAuthSuccess(data: unknown) {
   const authData = data as {
     person?: Person;
-    contract?: Contract;
     account?: Account;
   };
-  if (authData.person && authData.contract && authData.account) {
-    authStore.setAuth(
-      authData.person,
-      authData.contract,
-      authData.account
-    );
+  if (authData.person && authData.account) {
+    authStore.setAuth(authData.person, authData.account);
     router.push('/dashboard');
   }
 }

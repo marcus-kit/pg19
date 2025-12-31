@@ -5,7 +5,7 @@ export interface User {
   first_name: string;
   last_name: string;
   middle_name: string | null;
-  full_name: string;
+  full_name: string | null;
   email: string | null;
   phone: string | null;
   telegram_id: string | null;
@@ -18,7 +18,7 @@ export interface User {
   reg_apartment: string | null;
   created_at: string;
   date_updated: string;
-  contract?: Contract;
+  account?: Account;              // 1:1 relationship
 }
 
 export type UserStatus = 'active' | 'suspended' | 'terminated';
@@ -26,10 +26,53 @@ export type UserStatus = 'active' | 'suspended' | 'terminated';
 // Alias for backward compatibility
 export type Person = User;
 
-// Contract (Договор)
+// Account (Лицевой счёт + данные договора)
+// NOTE: contracts table was merged into accounts
+export interface Account {
+  id: number;
+  user_id: number | null;
+  status: AccountStatus;
+  balance: number;                // копейки
+  credit_limit: number;           // копейки
+  // Contract fields (merged from contracts table)
+  contract_number: number | null; // unique
+  contract_status: ContractStatus | null;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+  // Address fields
+  address_city: string | null;
+  address_street: string | null;
+  address_building: string | null;
+  address_apartment: string | null;
+  address_entrance: string | null;
+  address_floor: string | null;
+  address_intercom: string | null;
+  address_full: string | null;
+  // Timestamps
+  blocked_at: string | null;
+  date_created: string;
+  date_updated: string;
+  // Current subscription reference
+  subscription_id: number | null;
+  // Related data
+  user?: User;
+  subscriptions?: Subscription[];
+  transactions?: Transaction[];
+  payments?: Payment[];
+  invoices?: Invoice[];
+}
+
+export type AccountStatus = 'active' | 'blocked' | 'closed';
+export type ContractStatus = 'draft' | 'active' | 'terminated' | 'stopped';
+
+/**
+ * @deprecated Contract table was merged into Account. Use Account instead.
+ * Kept for backward compatibility with existing code.
+ */
 export interface Contract {
   id: number;
-  contract_number: string;        // 100001
+  contract_number: string;
   person_id: number | User;
   status: ContractStatus;
   start_date: string | null;
@@ -44,37 +87,6 @@ export interface Contract {
   date_updated: string;
   account?: Account;
 }
-
-export type ContractStatus = 'draft' | 'active' | 'terminated';
-
-// Account (Лицевой счёт)
-export interface Account {
-  id: number;
-  account_number: string;         // 100001-1
-  contract_id: number | Contract;
-  status: AccountStatus;
-  balance: number;                // копейки
-  credit_limit: number;           // копейки
-  currency: string;               // RUB
-  next_charge_date: string | null;
-  address_city: string | null;
-  address_street: string | null;
-  address_building: string | null;
-  address_apartment: string | null;
-  address_entrance: string | null;
-  address_floor: string | null;
-  address_intercom: string | null;
-  address_full: string | null;
-  blocked_at: string | null;
-  date_created: string;
-  date_updated: string;
-  subscriptions?: Subscription[];
-  transactions?: Transaction[];
-  payments?: Payment[];
-  invoices?: Invoice[];
-}
-
-export type AccountStatus = 'active' | 'blocked' | 'closed';
 
 // Service (Тариф/Услуга)
 export interface Service {
@@ -162,8 +174,9 @@ export type InvoiceStatus = 'draft' | 'issued' | 'paid' | 'overdue' | 'cancelled
 export interface ClientAuthState {
   isAuthenticated: boolean;
   user: User | null;
-  contract: Contract | null;
   account: Account | null;
+  /** @deprecated Use account instead. Kept for backward compatibility */
+  contract?: Contract | null;
 }
 
 // Dashboard stats for admin panel
@@ -177,9 +190,10 @@ export interface DashboardStats {
 
 // Auth data returned on successful authentication
 export interface AuthData {
-  person: User;  // Keep as 'person' for API compatibility
-  contract: Contract;
+  person: User;   // Keep as 'person' for API compatibility
   account: Account;
+  /** @deprecated Use account instead. Account now contains contract data */
+  contract?: Contract;
 }
 
 // Phone auth types
