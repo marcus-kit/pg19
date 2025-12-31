@@ -186,13 +186,19 @@ Internet → Cloudflare Tunnel → Traefik (:80) → Docker Containers
 
 ### Preview Environments (non-main branches)
 
-Preview URLs are generated automatically with format: `{app}-{branch}-{MMDD-HHMM}.doka.team`
+**Requirements for preview deploy:**
+1. Branch name must match: `dev` or `feature/*`
+2. Must change files in: `apps/**`, `packages/**`, `Dockerfile`, or `docker-compose.yml`
+
+**URL format:** `{app}-{branch}-{MMDD-HHMM}.doka.team`
 
 Examples:
-- `client-dev-1230-1530.doka.team`
-- `admin-feature-auth-0115-0930.doka.team`
+- `client-feature-auth-1231-1822.doka.team`
+- `admin-dev-0115-0930.doka.team`
 
-Previews are automatically cleaned up when PR is merged/closed.
+**Cleanup:**
+- Automatic: when PR is merged/closed
+- Manual: `git push origin --delete feature/branch-name`
 
 ### Server Access
 
@@ -298,6 +304,17 @@ Workflow: `.github/workflows/deploy.yml`
 5. **Relationship queries**: Use `.single()` for one-to-one relationships (user/account)
 
 6. **Account = Contract + Account**: The `accounts` table contains both billing account and contract data. Query accounts directly, not a separate contracts table
+
+7. **Supabase foreign key expansion**: Use alias syntax for proper field naming:
+   ```typescript
+   // ✅ Correct - creates `service` field
+   .select('*, service:service_id(*)')
+
+   // ❌ Wrong - creates `service_id` object, breaks code expecting `service`
+   .select('*, service_id(*)')
+   ```
+
+8. **Price format**: All prices in database are stored in **kopecks** (копейки). Use `formatMoney()` from `@pg19/ui` which expects kopecks
 
 ## Supabase Project Details
 
