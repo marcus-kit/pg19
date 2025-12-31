@@ -374,7 +374,7 @@ const faqCategories = [
   },
   {
     id: 'tariffs',
-    title: 'Тарифы и услуги',
+    title: 'Услуги',
     icon: DocumentIcon,
     bgClass: 'bg-green-100',
     iconClass: 'text-green-600',

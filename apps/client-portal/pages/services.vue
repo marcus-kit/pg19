@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Тарифы и услуги</h1>
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Услуги</h1>
 
     <!-- Current Subscriptions -->
     <BaseCard v-if="subscriptions.length > 0" class="mb-6 bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
