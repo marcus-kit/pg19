@@ -388,46 +388,27 @@ function dismissPromo() {
   localStorage.setItem(PROMO_DISMISSED_KEY, 'true');
 }
 
-// Load data
-onMounted(async () => {
-  // Ensure auth state is hydrated from localStorage (SSR doesn't have access to it)
-  authStore.hydrate();
+// Load data when account is available
+const dataLoaded = ref(false);
 
-  // Restore promo dismissed state
-  isPromoDismissed.value = localStorage.getItem(PROMO_DISMISSED_KEY) === 'true';
-
-  const accountIds = authStore.account ? [authStore.account.id] : [];
-  if (accountIds.length === 0) {
-    isInitialLoading.value = false;
-    return;
-  }
-
-  const accountId = account.value?.id;
+async function loadDashboardData(accountId: number) {
+  if (dataLoaded.value) return;
+  dataLoaded.value = true;
 
   try {
-    // Load subscriptions for all accounts
-    const allSubscriptions: Subscription[] = [];
-    for (const accId of accountIds) {
-      const subs = await api.getSubscriptions(accId);
-      allSubscriptions.push(...subs.filter(s => s.status === 'active'));
-    }
-
-    activeSubscriptions.value = allSubscriptions;
+    // Load subscriptions
+    const subs = await api.getSubscriptions(accountId);
+    activeSubscriptions.value = subs.filter(s => s.status === 'active');
   } catch (e) {
     console.error('Failed to load subscriptions:', e);
   } finally {
-    // Initial loading complete after subscriptions
     isInitialLoading.value = false;
   }
 
-  // Load invoices (can happen in parallel after initial load)
+  // Load invoices
   try {
-    const allInvoices: typeof unpaidInvoices.value = [];
-    for (const accId of accountIds) {
-      const { data } = await api.getInvoices(accId, { limit: 5 });
-      allInvoices.push(...data.filter(inv => inv.status === 'issued' || inv.status === 'overdue'));
-    }
-    unpaidInvoices.value = allInvoices.slice(0, 5);
+    const { data } = await api.getInvoices(accountId, { limit: 5 });
+    unpaidInvoices.value = data.filter(inv => inv.status === 'issued' || inv.status === 'overdue').slice(0, 5);
   } catch (e) {
     console.error('Failed to load invoices:', e);
   } finally {
@@ -435,14 +416,38 @@ onMounted(async () => {
   }
 
   // Load last payment
-  if (accountId) {
-    try {
-      lastPayment.value = await api.getLastPayment(accountId);
-    } catch (e) {
-      console.error('Failed to load last payment:', e);
-    } finally {
-      isLoadingLastPayment.value = false;
+  try {
+    lastPayment.value = await api.getLastPayment(accountId);
+  } catch (e) {
+    console.error('Failed to load last payment:', e);
+  } finally {
+    isLoadingLastPayment.value = false;
+  }
+}
+
+// Watch for account availability (handles SSR hydration)
+watch(
+  () => authStore.account?.id,
+  (accountId) => {
+    if (accountId) {
+      loadDashboardData(accountId);
     }
+  },
+  { immediate: true }
+);
+
+onMounted(() => {
+  // Ensure auth state is hydrated from localStorage
+  authStore.hydrate();
+
+  // Restore promo dismissed state
+  isPromoDismissed.value = localStorage.getItem(PROMO_DISMISSED_KEY) === 'true';
+
+  // If account already available after hydrate, load data
+  if (authStore.account?.id && !dataLoaded.value) {
+    loadDashboardData(authStore.account.id);
+  } else if (!authStore.account) {
+    isInitialLoading.value = false;
   }
 });
 </script>
