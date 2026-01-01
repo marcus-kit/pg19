@@ -5,43 +5,50 @@
 
     <!-- Connection Status Card -->
     <BaseCard v-if="account" class="border-l-4" :class="connectionStatusBorderClass">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="flex items-center gap-4">
-          <div
-            class="w-12 h-12 rounded-full flex items-center justify-center"
-            :class="connectionStatusBgClass"
-          >
-            <WifiIcon v-if="isConnected" class="w-6 h-6 text-secondary-600" />
-            <WifiOffIcon v-else class="w-6 h-6 text-red-600" />
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span
-                class="inline-flex items-center gap-1.5 text-sm font-medium"
-                :class="connectionStatusTextClass"
-              >
-                <span class="w-2 h-2 rounded-full" :class="connectionStatusDotClass" />
-                {{ connectionStatusText }}
-              </span>
-            </div>
-            <p v-if="currentTariff" class="text-gray-900 font-semibold mt-0.5">
-              {{ currentTariff.name }}
-            </p>
-            <p v-if="currentTariff?.description" class="text-sm text-gray-500">
-              {{ currentTariff.description }}
-            </p>
-          </div>
+      <div class="flex items-center gap-4 mb-4">
+        <div
+          class="w-12 h-12 rounded-full flex items-center justify-center"
+          :class="connectionStatusBgClass"
+        >
+          <WifiIcon v-if="isConnected" class="w-6 h-6 text-secondary-600" />
+          <WifiOffIcon v-else class="w-6 h-6 text-red-600" />
         </div>
-        <div class="flex flex-col md:items-end gap-1">
-          <div v-if="currentTariff" class="text-lg font-bold text-gray-900">
-            {{ formatMoney(tariffPrice) }}<span class="text-sm font-normal text-gray-500">/мес</span>
-          </div>
+        <div class="flex items-center justify-between flex-1">
+          <span
+            class="inline-flex items-center gap-1.5 text-sm font-medium"
+            :class="connectionStatusTextClass"
+          >
+            <span class="w-2 h-2 rounded-full" :class="connectionStatusDotClass" />
+            {{ connectionStatusText }}
+          </span>
           <NuxtLink
             to="/services"
             class="text-sm text-primary-500 hover:text-primary-600 font-medium"
           >
             Управление услугами →
           </NuxtLink>
+        </div>
+      </div>
+
+      <!-- Services List -->
+      <div v-if="activeSubscriptions.length > 0" class="space-y-2">
+        <div
+          v-for="sub in activeSubscriptions"
+          :key="sub.id"
+          class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+        >
+          <p class="text-gray-900 text-sm truncate flex-1 mr-4">
+            {{ sub.service?.name || 'Услуга' }}
+          </p>
+          <p class="text-gray-600 text-sm font-medium whitespace-nowrap">
+            {{ formatMoney(sub.custom_price !== null ? sub.custom_price : (sub.service?.price_monthly || 0) * 100) }}<span class="text-gray-400">/мес</span>
+          </p>
+        </div>
+        <div class="flex items-center justify-between pt-2">
+          <p class="text-gray-600 text-sm">Итого в месяц:</p>
+          <p class="text-lg font-bold text-gray-900">
+            {{ formatMoney(totalMonthlyCharge) }}
+          </p>
         </div>
       </div>
     </BaseCard>
@@ -236,7 +243,7 @@ const authStore = useAuthStore();
 const api = useApi();
 
 // Data
-const currentSubscription = ref<Subscription | null>(null);
+const activeSubscriptions = ref<Subscription[]>([]);
 const unpaidInvoices = ref<Invoice[]>([]);
 const isLoadingInvoices = ref(true);
 const openTicketsCount = ref(0);
@@ -248,24 +255,20 @@ const account = computed(() => authStore.account);
 // next_charge_date removed from schema - calculate from subscription if needed
 const nextChargeDate = computed(() => null);
 
-const currentTariff = computed<Service | null>(() => {
-  if (!currentSubscription.value?.service) return null;
-  return currentSubscription.value.service;
+const totalMonthlyCharge = computed(() => {
+  return activeSubscriptions.value.reduce((sum, sub) => {
+    const price = sub.custom_price !== null
+      ? sub.custom_price
+      : (sub.service?.price_monthly || 0) * 100;
+    return sum + price;
+  }, 0);
 });
 
-const tariffPrice = computed(() => {
-  if (!currentSubscription.value) return 0;
-  if (currentSubscription.value.custom_price !== null) {
-    return currentSubscription.value.custom_price;
-  }
-  return (currentSubscription.value.service?.price_monthly || 0) * 100;
-});
-
-const monthlyCharge = computed(() => tariffPrice.value);
+const monthlyCharge = computed(() => totalMonthlyCharge.value);
 
 const daysRemaining = computed(() => {
-  if (authStore.currentBalance <= 0 || tariffPrice.value <= 0) return null;
-  const dailyRate = tariffPrice.value / 30;
+  if (authStore.currentBalance <= 0 || totalMonthlyCharge.value <= 0) return null;
+  const dailyRate = totalMonthlyCharge.value / 30;
   return Math.floor(authStore.currentBalance / dailyRate);
 });
 
@@ -312,7 +315,7 @@ const connectionStatusDotClass = computed(() => {
 });
 
 const lowBalance = computed(() => {
-  return authStore.currentBalance < tariffPrice.value && authStore.currentBalance > 0;
+  return authStore.currentBalance < totalMonthlyCharge.value && authStore.currentBalance > 0;
 });
 
 const hasUnpaidInvoices = computed(() => unpaidInvoices.value.length > 0);
@@ -367,9 +370,7 @@ onMounted(async () => {
       allSubscriptions.push(...subs.filter(s => s.status === 'active'));
     }
 
-    currentSubscription.value = allSubscriptions.find(
-      s => s.account_id === accountId
-    ) ?? allSubscriptions[0] ?? null;
+    activeSubscriptions.value = allSubscriptions;
   } catch (e) {
     console.error('Failed to load subscriptions:', e);
   }
