@@ -49,6 +49,7 @@ import MobileNavigation from '~/components/MobileNavigation.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const api = useApi();
 
 const userName = computed(() => {
   if (authStore.user) {
@@ -66,8 +67,8 @@ const navItems = [
   { to: '/profile', label: 'Профиль' },
 ];
 
-// These would come from API in real app
 const unpaidInvoicesCount = ref(0);
+// TODO: Load from tickets API when table is created
 const openTicketsCount = ref(0);
 
 function handleLogout() {
@@ -77,6 +78,15 @@ function handleLogout() {
 
 // Load counts on mount
 onMounted(async () => {
-  // TODO: Load actual counts from API
+  if (!authStore.account?.id) return;
+
+  try {
+    const { data } = await api.getInvoices(authStore.account.id, { limit: 100 });
+    unpaidInvoicesCount.value = data.filter(
+      inv => inv.status === 'issued' || inv.status === 'overdue'
+    ).length;
+  } catch (e) {
+    console.error('Failed to load invoice count:', e);
+  }
 });
 </script>

@@ -149,6 +149,21 @@ export function useApi() {
       return data || [];
     },
 
+    async getLastPayment(accountId: number) {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('account_id', accountId)
+        .eq('type', 'payment')
+        .gt('amount', 0)
+        .order('date_created', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+
     // ============ Invoices ============
     async getInvoices(
       accountId: number,

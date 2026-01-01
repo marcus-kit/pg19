@@ -1,10 +1,20 @@
 <template>
-  <div class="space-y-6">
-    <!-- Cooperative News Section -->
-    <NewsSection />
+  <!-- Loading skeleton -->
+  <DashboardSkeleton v-if="isInitialLoading" />
+
+  <div v-else class="space-y-6">
+    <!-- Account Summary Header -->
+    <AccountSummaryCard
+      :balance="authStore.currentBalance"
+      :status="account?.status || 'unknown'"
+      :contract-number="String(authStore.account?.contract_number || '')"
+      :days-remaining="daysRemaining"
+      :unpaid-count="unpaidInvoicesCount"
+      :has-overdue="hasOverdueInvoices"
+    />
 
     <!-- Connection Status Card -->
-    <BaseCard v-if="account" class="border-l-4" :class="connectionStatusBorderClass">
+    <BaseCard v-if="account" class="border-l-4 dark:bg-slate-800" :class="connectionStatusBorderClass">
       <div class="flex items-center gap-4 mb-4">
         <div
           class="w-12 h-12 rounded-full flex items-center justify-center"
@@ -31,26 +41,11 @@
       </div>
 
       <!-- Services List -->
-      <div v-if="activeSubscriptions.length > 0" class="space-y-2">
-        <div
-          v-for="sub in activeSubscriptions"
-          :key="sub.id"
-          class="flex items-start justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0 gap-4"
-        >
-          <p class="text-gray-900 dark:text-gray-100 text-sm flex-1">
-            {{ sub.service?.name || 'Услуга' }}
-          </p>
-          <p class="text-gray-600 dark:text-gray-400 text-sm font-medium whitespace-nowrap">
-            {{ formatMoney(sub.custom_price !== null ? sub.custom_price : (sub.service?.price_monthly || 0)) }}<span class="text-gray-400 dark:text-gray-500">/мес</span>
-          </p>
-        </div>
-        <div class="flex items-center justify-between pt-2">
-          <p class="text-gray-600 dark:text-gray-400 text-sm">Итого в месяц:</p>
-          <p class="text-lg font-bold text-gray-900 dark:text-white">
-            {{ formatMoney(totalMonthlyCharge) }}
-          </p>
-        </div>
-      </div>
+      <ServicesSummary
+        v-if="activeSubscriptions.length > 0"
+        :subscriptions="activeSubscriptions"
+        :max-visible="3"
+      />
     </BaseCard>
 
     <!-- Alerts / Notifications -->
@@ -81,6 +76,8 @@
           label="Оплата"
           :badge="hasUnpaidInvoices ? unpaidInvoicesCount : undefined"
           color="primary"
+          :size="hasOverdueInvoices ? 'lg' : 'md'"
+          :emphasized="hasOverdueInvoices"
         />
       </NuxtLink>
       <NuxtLink to="/transactions">
@@ -110,7 +107,21 @@
     <!-- Two Column Layout for Desktop -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Special Offer: PG-Ai Silver -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-6 text-white shadow-xl">
+      <div
+        v-if="!isPromoDismissed"
+        class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-6 text-white shadow-xl"
+      >
+        <!-- Close button -->
+        <button
+          class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-10"
+          aria-label="Скрыть предложение"
+          @click="dismissPromo"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
         <!-- Background decoration -->
         <div class="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         <div class="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-white/10 blur-xl" />
@@ -162,28 +173,28 @@
           <div v-for="i in 2" :key="i" class="animate-pulse">
             <div class="flex justify-between items-center">
               <div class="space-y-2">
-                <div class="h-4 w-32 bg-gray-200 rounded" />
-                <div class="h-3 w-24 bg-gray-200 rounded" />
+                <div class="h-4 w-32 bg-gray-200 dark:bg-slate-600 rounded" />
+                <div class="h-3 w-24 bg-gray-200 dark:bg-slate-600 rounded" />
               </div>
-              <div class="h-8 w-24 bg-gray-200 rounded" />
+              <div class="h-8 w-24 bg-gray-200 dark:bg-slate-600 rounded" />
             </div>
           </div>
         </div>
 
         <div v-else-if="unpaidInvoices.length === 0" class="text-center py-8">
           <CheckCircleIcon class="w-12 h-12 text-secondary-400 mx-auto mb-3" />
-          <p class="text-gray-500">Все счета оплачены</p>
+          <p class="text-gray-500 dark:text-gray-400">Все счета оплачены</p>
         </div>
 
         <div v-else class="space-y-3">
           <div
             v-for="invoice in unpaidInvoices"
             :key="invoice.id"
-            class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+            class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0"
           >
             <div>
-              <p class="font-medium text-gray-900">{{ invoice.invoice_number }}</p>
-              <p v-if="invoice.period_start && invoice.period_end" class="text-sm text-gray-500">
+              <p class="font-medium text-gray-900 dark:text-white">{{ invoice.invoice_number }}</p>
+              <p v-if="invoice.period_start && invoice.period_end" class="text-sm text-gray-500 dark:text-gray-400">
                 {{ formatDate(invoice.period_start) }} — {{ formatDate(invoice.period_end) }}
               </p>
               <p
@@ -195,7 +206,7 @@
               </p>
             </div>
             <div class="flex items-center gap-3">
-              <span class="font-semibold text-gray-900">{{ formatMoney(invoice.amount) }}</span>
+              <span class="font-semibold text-gray-900 dark:text-white">{{ formatMoney(invoice.amount) }}</span>
               <NuxtLink :to="`/payment?invoice=${invoice.id}`">
                 <BaseButton variant="primary" size="sm">
                   Оплатить
@@ -204,8 +215,16 @@
             </div>
           </div>
         </div>
+
+        <!-- Last Payment Info -->
+        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+          <LastPaymentInfo :payment="lastPayment" :is-loading="isLoadingLastPayment" />
+        </div>
       </BaseCard>
     </div>
+
+    <!-- Collapsible News Widget -->
+    <NewsWidget />
   </div>
 </template>
 
@@ -214,26 +233,27 @@ import {
   BaseCard,
   BaseButton,
   BaseAlert,
-  BalanceDisplay,
-  StatusBadge,
   formatDate,
   formatMoney
 } from '@pg19/ui';
 import { useAuthStore } from '~/stores/auth';
-import type { Subscription, Invoice, Service } from '@pg19/types';
+import type { Subscription, Invoice, Transaction } from '@pg19/types';
 
 // Icons
-import WalletIcon from '~/components/icons/WalletIcon.vue';
 import WifiIcon from '~/components/icons/WifiIcon.vue';
 import WifiOffIcon from '~/components/icons/WifiOffIcon.vue';
-import CalendarIcon from '~/components/icons/CalendarIcon.vue';
 import ClockIcon from '~/components/icons/ClockIcon.vue';
 import ExclamationIcon from '~/components/icons/ExclamationIcon.vue';
 import CheckCircleIcon from '~/components/icons/CheckCircleIcon.vue';
-import CreditCardIcon from '~/components/icons/CreditCardIcon.vue';
 import SparklesIcon from '~/components/icons/SparklesIcon.vue';
+
+// Dashboard components
+import AccountSummaryCard from '~/components/dashboard/AccountSummaryCard.vue';
+import ServicesSummary from '~/components/dashboard/ServicesSummary.vue';
 import QuickActionCard from '~/components/dashboard/QuickActionCard.vue';
-import NewsSection from '~/components/news/NewsSection.vue';
+import LastPaymentInfo from '~/components/dashboard/LastPaymentInfo.vue';
+import DashboardSkeleton from '~/components/dashboard/DashboardSkeleton.vue';
+import NewsWidget from '~/components/dashboard/NewsWidget.vue';
 
 definePageMeta({
   middleware: 'auth',
@@ -242,12 +262,19 @@ definePageMeta({
 const authStore = useAuthStore();
 const api = useApi();
 
+// Storage keys
+const PROMO_DISMISSED_KEY = 'pg19-promo-ai-silver-dismissed';
+
 // Data
 const activeSubscriptions = ref<Subscription[]>([]);
 const unpaidInvoices = ref<Invoice[]>([]);
+const lastPayment = ref<Transaction | null>(null);
+const isInitialLoading = ref(true);
 const isLoadingInvoices = ref(true);
+const isLoadingLastPayment = ref(true);
 const openTicketsCount = ref(0);
 const hasAutopay = ref(false);
+const isPromoDismissed = ref(false);
 
 // Computed
 const account = computed(() => authStore.account);
@@ -295,10 +322,10 @@ const connectionStatusBorderClass = computed(() => {
 });
 
 const connectionStatusBgClass = computed(() => {
-  if (!account.value) return 'bg-gray-100';
+  if (!account.value) return 'bg-gray-100 dark:bg-slate-700';
   return account.value.status === 'active'
-    ? 'bg-secondary-100'
-    : 'bg-red-100';
+    ? 'bg-secondary-100 dark:bg-secondary-900/30'
+    : 'bg-red-100 dark:bg-red-900/30';
 });
 
 const connectionStatusTextClass = computed(() => {
@@ -356,31 +383,45 @@ function activatePromo() {
   alert('Поздравляем! Подписка PG-Ai Silver активирована на 30 дней бесплатно.');
 }
 
+function dismissPromo() {
+  isPromoDismissed.value = true;
+  localStorage.setItem(PROMO_DISMISSED_KEY, 'true');
+}
+
 // Load data
 onMounted(async () => {
+  // Restore promo dismissed state
+  isPromoDismissed.value = localStorage.getItem(PROMO_DISMISSED_KEY) === 'true';
+
   const accountIds = authStore.account ? [authStore.account.id] : [];
-  if (accountIds.length === 0) return;
+  if (accountIds.length === 0) {
+    isInitialLoading.value = false;
+    return;
+  }
 
   const accountId = account.value?.id;
 
   try {
     // Load subscriptions for all accounts
     const allSubscriptions: Subscription[] = [];
-    for (const accountId of accountIds) {
-      const subs = await api.getSubscriptions(accountId);
+    for (const accId of accountIds) {
+      const subs = await api.getSubscriptions(accId);
       allSubscriptions.push(...subs.filter(s => s.status === 'active'));
     }
 
     activeSubscriptions.value = allSubscriptions;
   } catch (e) {
     console.error('Failed to load subscriptions:', e);
+  } finally {
+    // Initial loading complete after subscriptions
+    isInitialLoading.value = false;
   }
 
+  // Load invoices (can happen in parallel after initial load)
   try {
-    // Load invoices for all accounts
     const allInvoices: typeof unpaidInvoices.value = [];
-    for (const accountId of accountIds) {
-      const { data } = await api.getInvoices(accountId, { limit: 5 });
+    for (const accId of accountIds) {
+      const { data } = await api.getInvoices(accId, { limit: 5 });
       allInvoices.push(...data.filter(inv => inv.status === 'issued' || inv.status === 'overdue'));
     }
     unpaidInvoices.value = allInvoices.slice(0, 5);
@@ -388,6 +429,17 @@ onMounted(async () => {
     console.error('Failed to load invoices:', e);
   } finally {
     isLoadingInvoices.value = false;
+  }
+
+  // Load last payment
+  if (accountId) {
+    try {
+      lastPayment.value = await api.getLastPayment(accountId);
+    } catch (e) {
+      console.error('Failed to load last payment:', e);
+    } finally {
+      isLoadingLastPayment.value = false;
+    }
   }
 });
 </script>
