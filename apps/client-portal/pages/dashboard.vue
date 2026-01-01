@@ -390,6 +390,9 @@ function dismissPromo() {
 
 // Load data
 onMounted(async () => {
+  // Ensure auth state is hydrated from localStorage (SSR doesn't have access to it)
+  authStore.hydrate();
+
   // Restore promo dismissed state
   isPromoDismissed.value = localStorage.getItem(PROMO_DISMISSED_KEY) === 'true';
 
