@@ -40,7 +40,7 @@
             to="/services"
             class="text-sm text-primary-500 hover:text-primary-600 font-medium"
           >
-            Сменить тариф →
+            Управление услугами →
           </NuxtLink>
         </div>
       </div>

@@ -1,17 +1,17 @@
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Тарифы и услуги</h1>
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Услуги</h1>
 
     <!-- Current Tariff -->
     <BaseCard v-if="currentSubscription" class="mb-6 bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div class="flex items-center gap-2 mb-2">
-            <span class="px-2 py-1 bg-primary-500 text-white text-xs font-medium rounded">Ваш тариф</span>
+            <span class="px-2 py-1 bg-primary-500 text-white text-xs font-medium rounded">Ваша услуга</span>
             <StatusBadge :status="currentSubscription.status" type="subscription" />
           </div>
           <h3 class="text-2xl font-bold text-gray-900">
-            {{ currentSubscription.service?.name || 'Тариф' }}
+            {{ currentSubscription.service?.name || 'Услуга' }}
           </h3>
           <p v-if="currentSubscription.service?.description" class="text-gray-600 mt-1">
             {{ currentSubscription.service.description }}
@@ -62,7 +62,7 @@
 
       <div v-else-if="availableServices.length === 0" class="text-center py-12">
         <TariffIcon class="w-16 h-16 mx-auto text-gray-300 mb-4" />
-        <p class="text-gray-500">Нет доступных тарифов</p>
+        <p class="text-gray-500">Нет доступных услуг</p>
       </div>
 
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -97,7 +97,7 @@
                   v-if="isCurrentService(service.id)"
                   class="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded"
                 >
-                  Ваш тариф
+                  Ваша услуга
                 </span>
               </div>
 
@@ -139,7 +139,7 @@
               disabled
             >
               <CheckIcon class="w-5 h-5 mr-2" />
-              Текущий тариф
+              Текущая услуга
             </BaseButton>
             <BaseButton
               v-else
@@ -147,7 +147,7 @@
               class="w-full"
               @click="openChangeTariffModal(service)"
             >
-              Выбрать тариф
+              Выбрать услугу
             </BaseButton>
           </BaseCard>
         </div>
@@ -267,15 +267,15 @@
     </div>
 
     <!-- Change Tariff Modal -->
-    <BaseModal v-model:isOpen="showChangeTariffModal" title="Смена тарифа">
+    <BaseModal v-model:isOpen="showChangeTariffModal" title="Смена услуги">
       <div v-if="selectedService" class="space-y-4">
         <div class="p-4 bg-gray-50 rounded-lg">
           <div class="flex justify-between mb-2">
-            <span class="text-gray-600">Текущий тариф</span>
+            <span class="text-gray-600">Текущая услуга</span>
             <span class="font-medium">{{ currentSubscription?.service?.name }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-gray-600">Новый тариф</span>
+            <span class="text-gray-600">Новая услуга</span>
             <span class="font-semibold text-primary-600">{{ selectedService.name }}</span>
           </div>
         </div>
@@ -306,7 +306,7 @@
               />
               <div>
                 <p class="font-medium text-gray-900">С начала следующего периода</p>
-                <p class="text-sm text-gray-500">Текущий тариф сохранится до конца оплаченного периода</p>
+                <p class="text-sm text-gray-500">Текущая услуга сохранится до конца оплаченного периода</p>
               </div>
             </label>
           </div>
@@ -360,7 +360,7 @@ const vacation = reactive({
 });
 
 const tabs = [
-  { id: 'tariffs' as const, label: 'Тарифы' },
+  { id: 'tariffs' as const, label: 'Услуги' },
   { id: 'additional' as const, label: 'Дополнительные услуги' },
   { id: 'vacation' as const, label: 'Приостановка' },
 ];
@@ -458,7 +458,7 @@ function openChangeTariffModal(service: Service) {
 
 function confirmTariffChange() {
   // TODO: Call API to change tariff
-  alert(`Заявка на смену тарифа на "${selectedService.value?.name}" принята!`);
+  alert(`Заявка на смену услуги на "${selectedService.value?.name}" принята!`);
   showChangeTariffModal.value = false;
 }
 

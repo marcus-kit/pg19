@@ -61,7 +61,7 @@ const navItems = [
   { to: '/dashboard', label: 'Главная' },
   { to: '/invoices', label: 'Счета' },
   { to: '/security', label: 'Безопасность' },
-  { to: '/services', label: 'Тарифы' },
+  { to: '/services', label: 'Услуги' },
   { to: '/support', label: 'Поддержка' },
   { to: '/profile', label: 'Профиль' },
 ];
