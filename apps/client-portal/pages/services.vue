@@ -123,11 +123,11 @@
 
               <div class="mb-6">
                 <span class="text-3xl font-bold text-gray-900">
-                  {{ formatMoney(service.price_monthly * 100) }}
+                  {{ formatMoney(service.price_monthly) }}
                 </span>
                 <span class="text-gray-500">/мес</span>
                 <p v-if="service.price_connection" class="text-sm text-gray-400 mt-1">
-                  Подключение: {{ formatMoney(service.price_connection * 100) }}
+                  Подключение: {{ formatMoney(service.price_connection) }}
                 </p>
               </div>
             </div>
@@ -404,7 +404,7 @@ const currentServicePrice = computed(() => {
   if (currentSubscription.value.custom_price !== null) {
     return currentSubscription.value.custom_price;
   }
-  return (currentSubscription.value.service?.price_monthly || 0) * 100;
+  return currentSubscription.value.service?.price_monthly || 0;
 });
 
 const minVacationDate = computed(() => {

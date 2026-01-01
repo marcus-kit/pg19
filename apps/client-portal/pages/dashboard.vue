@@ -35,18 +35,18 @@
         <div
           v-for="sub in activeSubscriptions"
           :key="sub.id"
-          class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+          class="flex items-start justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0 gap-4"
         >
-          <p class="text-gray-900 text-sm truncate flex-1 mr-4">
+          <p class="text-gray-900 dark:text-gray-100 text-sm flex-1">
             {{ sub.service?.name || 'Услуга' }}
           </p>
-          <p class="text-gray-600 text-sm font-medium whitespace-nowrap">
-            {{ formatMoney(sub.custom_price !== null ? sub.custom_price : (sub.service?.price_monthly || 0) * 100) }}<span class="text-gray-400">/мес</span>
+          <p class="text-gray-600 dark:text-gray-400 text-sm font-medium whitespace-nowrap">
+            {{ formatMoney(sub.custom_price !== null ? sub.custom_price : (sub.service?.price_monthly || 0)) }}<span class="text-gray-400 dark:text-gray-500">/мес</span>
           </p>
         </div>
         <div class="flex items-center justify-between pt-2">
-          <p class="text-gray-600 text-sm">Итого в месяц:</p>
-          <p class="text-lg font-bold text-gray-900">
+          <p class="text-gray-600 dark:text-gray-400 text-sm">Итого в месяц:</p>
+          <p class="text-lg font-bold text-gray-900 dark:text-white">
             {{ formatMoney(totalMonthlyCharge) }}
           </p>
         </div>
@@ -257,9 +257,10 @@ const nextChargeDate = computed(() => null);
 
 const totalMonthlyCharge = computed(() => {
   return activeSubscriptions.value.reduce((sum, sub) => {
+    // custom_price and price_monthly are already in kopeks
     const price = sub.custom_price !== null
       ? sub.custom_price
-      : (sub.service?.price_monthly || 0) * 100;
+      : (sub.service?.price_monthly || 0);
     return sum + price;
   }, 0);
 });
