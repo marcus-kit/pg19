@@ -388,13 +388,8 @@ function dismissPromo() {
   localStorage.setItem(PROMO_DISMISSED_KEY, 'true');
 }
 
-// Load data when account is available
-const dataLoaded = ref(false);
-
+// Load dashboard data
 async function loadDashboardData(accountId: number) {
-  if (dataLoaded.value) return;
-  dataLoaded.value = true;
-
   try {
     // Load subscriptions
     const subs = await api.getSubscriptions(accountId);
@@ -425,28 +420,20 @@ async function loadDashboardData(accountId: number) {
   }
 }
 
-// Watch for account availability (handles SSR hydration)
-watch(
-  () => authStore.account?.id,
-  (accountId) => {
-    if (accountId) {
-      loadDashboardData(accountId);
-    }
-  },
-  { immediate: true }
-);
-
-onMounted(() => {
+onMounted(async () => {
   // Ensure auth state is hydrated from localStorage
   authStore.hydrate();
 
   // Restore promo dismissed state
   isPromoDismissed.value = localStorage.getItem(PROMO_DISMISSED_KEY) === 'true';
 
-  // If account already available after hydrate, load data
-  if (authStore.account?.id && !dataLoaded.value) {
-    loadDashboardData(authStore.account.id);
-  } else if (!authStore.account) {
+  // Wait for next tick to ensure Pinia state is updated
+  await nextTick();
+
+  const accountId = authStore.account?.id;
+  if (accountId) {
+    loadDashboardData(accountId);
+  } else {
     isInitialLoading.value = false;
   }
 });
