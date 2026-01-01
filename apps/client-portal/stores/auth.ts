@@ -18,7 +18,9 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     currentBalance: (state): number => {
-      return state.account?.balance || 0;
+      // Balance in DB is stored in rubles, but UI components expect kopeks
+      // Multiply by 100 to convert rubles → kopeks
+      return (state.account?.balance || 0) * 100;
     },
 
     isBlocked: (state): boolean => {
