@@ -49,26 +49,18 @@ const STORAGE_KEY = 'pg19-theme';
 
 const isDark = ref(false);
 
-// Initialize theme from localStorage or system preference
+// Initialize theme from localStorage (default: light)
 onMounted(() => {
   const stored = localStorage.getItem(STORAGE_KEY);
 
   if (stored) {
     isDark.value = stored === 'dark';
   } else {
-    // Respect system preference
-    isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Default to light theme
+    isDark.value = false;
   }
 
   applyTheme();
-
-  // Listen for system theme changes
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      isDark.value = e.matches;
-      applyTheme();
-    }
-  });
 });
 
 function toggle() {
