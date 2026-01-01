@@ -321,7 +321,18 @@ Workflow: `.github/workflows/deploy.yml`
    .select('*, service_id(*)')
    ```
 
-8. **Price format**: All prices in database are stored in **kopecks** (копейки). Use `formatMoney()` from `@pg19/ui` which expects kopecks
+8. **Money format**:
+   - **Prices** (`services.price_monthly`, etc.): stored in **kopecks** (100 = 1 ruble)
+   - **Balance** (`accounts.balance`): stored in **1/100 kopecks** (10000 = 1 ruble)
+   - `formatMoney()` from `@pg19/ui` expects kopecks
+   - In `stores/auth.ts`, `currentBalance` getter divides by 100 to convert to kopecks
+
+9. **RLS (Row Level Security)**:
+   - All tables have RLS enabled
+   - Client portal uses **anon key** (no JWT authentication)
+   - Anon policies allow SELECT on: `accounts`, `subscriptions`, `transactions`, `invoices`, `services`
+   - These policies use `USING (true)` - filtering is done in application code by `account_id`
+   - Admin panel should use **service_role key** for full access
 
 ## Supabase Project Details
 
