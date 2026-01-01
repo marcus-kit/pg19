@@ -48,16 +48,17 @@ export function formatRelativeDate(date: string | Date): string {
   return formatDate(date);
 }
 
-// ФИО
-export function formatFullName(person: { first_name?: string | null; last_name?: string | null }): string {
-  return [person.last_name, person.first_name].filter(Boolean).join(' ');
+// ФИО (Фамилия Имя Отчество)
+export function formatFullName(user: { first_name?: string | null; last_name?: string | null; middle_name?: string | null }): string {
+  return [user.last_name, user.first_name, user.middle_name].filter(Boolean).join(' ');
 }
 
-// Короткое ФИО (Иванов И.)
-export function formatShortName(person: { first_name?: string | null; last_name?: string | null }): string {
-  const lastName = person.last_name || '';
-  const firstInitial = person.first_name ? person.first_name[0] + '.' : '';
-  return `${lastName} ${firstInitial}`.trim();
+// Короткое ФИО (Иванов И. О.)
+export function formatShortName(user: { first_name?: string | null; last_name?: string | null; middle_name?: string | null }): string {
+  const lastName = user.last_name || '';
+  const firstInitial = user.first_name ? user.first_name[0] + '.' : '';
+  const middleInitial = user.middle_name ? user.middle_name[0] + '.' : '';
+  return [lastName, firstInitial, middleInitial].filter(Boolean).join(' ');
 }
 
 // Телефон

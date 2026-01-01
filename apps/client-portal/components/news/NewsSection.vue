@@ -34,7 +34,7 @@
         <!-- News list -->
         <div v-else class="space-y-3">
           <NewsCard
-            v-for="item in displayedNews"
+            v-for="item in news"
             :key="item.id"
             :news="item"
             @click="openNews(item)"
@@ -73,14 +73,17 @@ const showModal = ref(false);
 const selectedNews = ref<News | null>(null);
 
 const unreadCount = computed(() => news.value.filter(n => !n.is_read).length);
-const displayedNews = computed(() => news.value.slice(0, 5));
+
+// Display limit for dashboard - fetch exactly what we need
+const DISPLAY_LIMIT = 5;
 
 async function loadNews() {
   if (!authStore.user?.id) return;
 
   isLoading.value = true;
   try {
-    news.value = await api.getNews(authStore.user.id, { limit: 10 });
+    // Fetch only what we display to reduce payload
+    news.value = await api.getNews(authStore.user.id, { limit: DISPLAY_LIMIT });
   } catch (error) {
     console.error('Failed to load news:', error);
   } finally {

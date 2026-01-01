@@ -13,6 +13,7 @@
       "types": "./components/*.vue",
       "import": "./components/*.vue"
     },
+    "./styles/*": "./styles/*",
     "./tailwind.preset": {
       "require": "./tailwind.preset.js",
       "import": "./tailwind.preset.js"

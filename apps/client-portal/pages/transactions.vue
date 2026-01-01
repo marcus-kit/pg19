@@ -384,30 +384,21 @@ async function loadTransactions() {
   isLoading.value = true;
 
   try {
+    // Server-side filtering - API now supports type and date range
     const result = await api.getTransactions(accountId, {
       limit: perPage,
       offset: (currentPage.value - 1) * perPage,
+      type: filter.type || undefined,
+      startDate: filter.startDate || undefined,
+      endDate: filter.endDate || undefined,
     });
 
-    // Client-side filtering (worker supports limited filters)
-    let filtered = result.data;
-
-    if (filter.type) {
-      filtered = filtered.filter(t => t.type === filter.type);
+    // Handle aborted requests gracefully
+    if (!result) {
+      return;
     }
 
-    if (filter.startDate) {
-      const startDate = new Date(filter.startDate);
-      filtered = filtered.filter(t => new Date(t.date_created) >= startDate);
-    }
-
-    if (filter.endDate) {
-      const endDate = new Date(filter.endDate);
-      endDate.setDate(endDate.getDate() + 1);
-      filtered = filtered.filter(t => new Date(t.date_created) < endDate);
-    }
-
-    transactions.value = filtered;
+    transactions.value = result.data;
     total.value = result.meta.total;
   } catch (e) {
     console.error('Failed to load transactions:', e);

@@ -13,48 +13,43 @@
           <WifiIcon v-if="isConnected" class="w-6 h-6 text-secondary-600" />
           <WifiOffIcon v-else class="w-6 h-6 text-red-600" />
         </div>
-        <div class="flex-1">
-          <div class="flex items-center justify-between">
-            <span
-              class="inline-flex items-center gap-1.5 text-sm font-medium"
-              :class="connectionStatusTextClass"
-            >
-              <span class="w-2 h-2 rounded-full" :class="connectionStatusDotClass" />
-              {{ connectionStatusText }}
-            </span>
-            <NuxtLink
-              to="/services"
-              class="text-sm text-primary-500 hover:text-primary-600 font-medium"
-            >
-              Управление услугами →
-            </NuxtLink>
-          </div>
+        <div class="flex items-center justify-between flex-1">
+          <span
+            class="inline-flex items-center gap-1.5 text-sm font-medium"
+            :class="connectionStatusTextClass"
+          >
+            <span class="w-2 h-2 rounded-full" :class="connectionStatusDotClass" />
+            {{ connectionStatusText }}
+          </span>
+          <NuxtLink
+            to="/services"
+            class="text-sm text-primary-500 hover:text-primary-600 font-medium"
+          >
+            Управление услугами →
+          </NuxtLink>
         </div>
       </div>
 
-      <!-- Subscriptions List -->
-      <div v-if="subscriptions.length > 0" class="space-y-2">
+      <!-- Services List -->
+      <div v-if="activeSubscriptions.length > 0" class="space-y-2">
         <div
-          v-for="sub in subscriptions"
+          v-for="sub in activeSubscriptions"
           :key="sub.id"
-          class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+          class="flex items-start justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0 gap-4"
         >
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-gray-900 truncate">
-              {{ sub.service?.name || 'Услуга' }}
-            </p>
-          </div>
-          <div class="ml-4 text-sm font-semibold text-gray-700">
-            {{ formatMoney(getSubscriptionPrice(sub)) }}<span class="text-xs font-normal text-gray-500">/мес</span>
-          </div>
+          <p class="text-gray-900 dark:text-gray-100 text-sm flex-1">
+            {{ sub.service?.name || 'Услуга' }}
+          </p>
+          <p class="text-gray-600 dark:text-gray-400 text-sm font-medium whitespace-nowrap">
+            {{ formatMoney(sub.custom_price !== null ? sub.custom_price : (sub.service?.price_monthly || 0)) }}<span class="text-gray-400 dark:text-gray-500">/мес</span>
+          </p>
         </div>
-        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
-          <span class="text-sm font-medium text-gray-600">Итого в месяц:</span>
-          <span class="text-lg font-bold text-gray-900">{{ formatMoney(totalMonthlyPrice) }}</span>
+        <div class="flex items-center justify-between pt-2">
+          <p class="text-gray-600 dark:text-gray-400 text-sm">Итого в месяц:</p>
+          <p class="text-lg font-bold text-gray-900 dark:text-white">
+            {{ formatMoney(totalMonthlyCharge) }}
+          </p>
         </div>
-      </div>
-      <div v-else class="text-sm text-gray-500">
-        Нет активных услуг
       </div>
     </BaseCard>
 
@@ -248,7 +243,7 @@ const authStore = useAuthStore();
 const api = useApi();
 
 // Data
-const subscriptions = ref<Subscription[]>([]);
+const activeSubscriptions = ref<Subscription[]>([]);
 const unpaidInvoices = ref<Invoice[]>([]);
 const isLoadingInvoices = ref(true);
 const openTicketsCount = ref(0);
@@ -257,22 +252,24 @@ const hasAutopay = ref(false);
 // Computed
 const account = computed(() => authStore.account);
 
-// Helper function to get subscription price
-function getSubscriptionPrice(sub: Subscription): number {
-  if (sub.custom_price !== null) return sub.custom_price;
-  return (sub.service?.price_monthly || 0) * 100;
-}
+// next_charge_date removed from schema - calculate from subscription if needed
+const nextChargeDate = computed(() => null);
 
-// Total monthly price for all subscriptions
-const totalMonthlyPrice = computed(() => {
-  return subscriptions.value.reduce((sum, sub) => sum + getSubscriptionPrice(sub), 0);
+const totalMonthlyCharge = computed(() => {
+  return activeSubscriptions.value.reduce((sum, sub) => {
+    // custom_price and price_monthly are already in kopeks
+    const price = sub.custom_price !== null
+      ? sub.custom_price
+      : (sub.service?.price_monthly || 0);
+    return sum + price;
+  }, 0);
 });
 
-const monthlyCharge = computed(() => totalMonthlyPrice.value);
+const monthlyCharge = computed(() => totalMonthlyCharge.value);
 
 const daysRemaining = computed(() => {
-  if (authStore.currentBalance <= 0 || totalMonthlyPrice.value <= 0) return null;
-  const dailyRate = totalMonthlyPrice.value / 30;
+  if (authStore.currentBalance <= 0 || totalMonthlyCharge.value <= 0) return null;
+  const dailyRate = totalMonthlyCharge.value / 30;
   return Math.floor(authStore.currentBalance / dailyRate);
 });
 
@@ -319,7 +316,7 @@ const connectionStatusDotClass = computed(() => {
 });
 
 const lowBalance = computed(() => {
-  return authStore.currentBalance < totalMonthlyPrice.value && authStore.currentBalance > 0;
+  return authStore.currentBalance < totalMonthlyCharge.value && authStore.currentBalance > 0;
 });
 
 const hasUnpaidInvoices = computed(() => unpaidInvoices.value.length > 0);
@@ -367,16 +364,14 @@ onMounted(async () => {
   const accountId = account.value?.id;
 
   try {
-    // Load all active subscriptions
-    const subs = await api.getSubscriptions(accountId!);
-    // Sort by price descending (main services first)
-    subscriptions.value = subs
-      .filter(s => s.status === 'active')
-      .sort((a, b) => {
-        const priceA = a.custom_price ?? (a.service?.price_monthly || 0) * 100;
-        const priceB = b.custom_price ?? (b.service?.price_monthly || 0) * 100;
-        return priceB - priceA;
-      });
+    // Load subscriptions for all accounts
+    const allSubscriptions: Subscription[] = [];
+    for (const accountId of accountIds) {
+      const subs = await api.getSubscriptions(accountId);
+      allSubscriptions.push(...subs.filter(s => s.status === 'active'));
+    }
+
+    activeSubscriptions.value = allSubscriptions;
   } catch (e) {
     console.error('Failed to load subscriptions:', e);
   }

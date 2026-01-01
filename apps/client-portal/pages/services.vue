@@ -71,7 +71,7 @@
 
       <div v-else-if="availableServices.length === 0" class="text-center py-12">
         <TariffIcon class="w-16 h-16 mx-auto text-gray-300 mb-4" />
-        <p class="text-gray-500">Нет доступных тарифов</p>
+        <p class="text-gray-500">Нет доступных услуг</p>
       </div>
 
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -106,7 +106,7 @@
                   v-if="isCurrentService(service.id)"
                   class="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded"
                 >
-                  Ваш тариф
+                  Ваша услуга
                 </span>
               </div>
 
@@ -148,7 +148,7 @@
               disabled
             >
               <CheckIcon class="w-5 h-5 mr-2" />
-              Текущий тариф
+              Текущая услуга
             </BaseButton>
             <BaseButton
               v-else
@@ -156,7 +156,7 @@
               class="w-full"
               @click="openChangeTariffModal(service)"
             >
-              Выбрать тариф
+              Выбрать услугу
             </BaseButton>
           </BaseCard>
         </div>
@@ -276,7 +276,7 @@
     </div>
 
     <!-- Change Tariff Modal -->
-    <BaseModal v-model:isOpen="showChangeTariffModal" title="Смена тарифа">
+    <BaseModal v-model:isOpen="showChangeTariffModal" title="Смена услуги">
       <div v-if="selectedService" class="space-y-4">
         <div class="p-4 bg-gray-50 rounded-lg">
           <div class="mb-2">
@@ -288,7 +288,7 @@
             </ul>
           </div>
           <div class="flex justify-between pt-2 border-t border-gray-200">
-            <span class="text-gray-600">Новый тариф</span>
+            <span class="text-gray-600">Новая услуга</span>
             <span class="font-semibold text-primary-600">{{ selectedService.name }}</span>
           </div>
         </div>
@@ -319,7 +319,7 @@
               />
               <div>
                 <p class="font-medium text-gray-900">С начала следующего периода</p>
-                <p class="text-sm text-gray-500">Текущий тариф сохранится до конца оплаченного периода</p>
+                <p class="text-sm text-gray-500">Текущая услуга сохранится до конца оплаченного периода</p>
               </div>
             </label>
           </div>
@@ -367,10 +367,10 @@ const showChangeTariffModal = ref(false);
 const selectedService = ref<Service | null>(null);
 const changeOption = ref('next_period');
 
-// Helper function to get subscription price
+// Helper function to get subscription price (prices already in kopeks)
 function getSubscriptionPrice(sub: Subscription): number {
   if (sub.custom_price !== null) return sub.custom_price;
-  return (sub.service?.price_monthly || 0) * 100;
+  return sub.service?.price_monthly || 0;
 }
 
 // Total monthly price
@@ -458,12 +458,12 @@ function isCurrentService(serviceId: number): boolean {
 }
 
 function getSpeedLabel(service: Service): string {
-  // Mock speed based on price
-  const price = service.price_monthly;
-  if (price <= 400) return '30 Мбит/с';
-  if (price <= 700) return '100 Мбит/с';
-  if (price <= 1000) return '300 Мбит/с';
-  if (price <= 1500) return '500 Мбит/с';
+  // Mock speed based on price (prices in kopeks, so divide by 100 for comparison)
+  const priceRubles = service.price_monthly / 100;
+  if (priceRubles <= 400) return '30 Мбит/с';
+  if (priceRubles <= 700) return '100 Мбит/с';
+  if (priceRubles <= 1000) return '300 Мбит/с';
+  if (priceRubles <= 1500) return '500 Мбит/с';
   return '1 Гбит/с';
 }
 
@@ -475,7 +475,7 @@ function openChangeTariffModal(service: Service) {
 
 function confirmTariffChange() {
   // TODO: Call API to change tariff
-  alert(`Заявка на смену тарифа на "${selectedService.value?.name}" принята!`);
+  alert(`Заявка на смену услуги на "${selectedService.value?.name}" принята!`);
   showChangeTariffModal.value = false;
 }
 
@@ -496,14 +496,8 @@ onMounted(async () => {
 
     availableServices.value = services;
 
-    // Store all active subscriptions sorted by price (highest first)
-    subscriptions.value = subs
-      .filter(s => s.status === 'active')
-      .sort((a, b) => {
-        const priceA = a.custom_price ?? (a.service?.price_monthly || 0) * 100;
-        const priceB = b.custom_price ?? (b.service?.price_monthly || 0) * 100;
-        return priceB - priceA;
-      });
+    // Store all active subscriptions
+    subscriptions.value = subs.filter(s => s.status === 'active');
   } catch (e) {
     console.error('Failed to load services:', e);
   } finally {

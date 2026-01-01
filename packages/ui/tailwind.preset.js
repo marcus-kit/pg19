@@ -1,8 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        // Brand colors (static)
         primary: {
           50: '#EEF2FF',
           100: '#E0E7FF',
@@ -31,9 +33,28 @@ module.exports = {
           pink: '#E61562',
           orange: '#F29315',
         },
+
+        // Semantic colors (CSS variable-based for dark mode)
+        surface: {
+          DEFAULT: 'var(--color-surface)',
+          elevated: 'var(--color-surface-elevated)',
+          sunken: 'var(--color-surface-sunken)',
+        },
+        border: {
+          DEFAULT: 'var(--color-border)',
+          muted: 'var(--color-border-muted)',
+        },
+        content: {
+          DEFAULT: 'var(--color-content)',
+          secondary: 'var(--color-content-secondary)',
+          muted: 'var(--color-content-muted)',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      backgroundColor: {
+        page: 'var(--color-bg-page)',
       },
     },
   },

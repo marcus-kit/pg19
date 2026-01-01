@@ -1,0 +1,55 @@
+/**
+ * PG19 Theme CSS Variables
+ *
+ * These variables define the semantic colors for the design system.
+ * Use Tailwind classes like `bg-surface`, `text-content`, `border-border`
+ * instead of hardcoded colors like `bg-white`, `text-gray-900`.
+ */
+
+:root {
+  /* Surface colors - backgrounds */
+  --color-bg-page: #f3f4f6;          /* Page background (gray-100) */
+  --color-surface: #ffffff;           /* Card/component background */
+  --color-surface-elevated: #ffffff;  /* Elevated cards (modals, dropdowns) */
+  --color-surface-sunken: #f9fafb;    /* Sunken areas (input backgrounds) */
+
+  /* Border colors */
+  --color-border: #e5e7eb;            /* Default borders (gray-200) */
+  --color-border-muted: #f3f4f6;      /* Subtle borders (gray-100) */
+
+  /* Content/text colors */
+  --color-content: #111827;           /* Primary text (gray-900) */
+  --color-content-secondary: #4b5563; /* Secondary text (gray-600) */
+  --color-content-muted: #9ca3af;     /* Muted/hint text (gray-400) */
+
+  /* Transition for smooth theme switching */
+  color-scheme: light;
+}
+
+.dark {
+  /* Surface colors - backgrounds */
+  --color-bg-page: #0f172a;           /* Page background (slate-900) */
+  --color-surface: #1e293b;           /* Card/component background (slate-800) */
+  --color-surface-elevated: #334155;  /* Elevated cards (slate-700) */
+  --color-surface-sunken: #0f172a;    /* Sunken areas (slate-900) */
+
+  /* Border colors */
+  --color-border: #334155;            /* Default borders (slate-700) */
+  --color-border-muted: #1e293b;      /* Subtle borders (slate-800) */
+
+  /* Content/text colors */
+  --color-content: #f1f5f9;           /* Primary text (slate-100) */
+  --color-content-secondary: #94a3b8; /* Secondary text (slate-400) */
+  --color-content-muted: #64748b;     /* Muted/hint text (slate-500) */
+
+  color-scheme: dark;
+}
+
+/* Smooth transition when toggling theme */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.15s ease !important;
+  transition-delay: 0s !important;
+}

@@ -1,3 +1,6 @@
+/* Theme CSS variables for dark mode support */
+@import '@pg19/ui/styles/theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,7 +11,9 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900;
+    /* Use semantic colors for dark mode support */
+    background-color: var(--color-bg-page);
+    color: var(--color-content);
   }
 }
 

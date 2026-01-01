@@ -15,6 +15,26 @@ import type {
 } from '@pg19/types';
 import { createSupabaseClient } from '@pg19/api';
 
+// AbortController management for cancellable requests
+const abortControllers = new Map<string, AbortController>();
+
+function getAbortSignal(key: string): AbortSignal {
+  // Cancel previous request with same key
+  const existing = abortControllers.get(key);
+  if (existing) {
+    existing.abort();
+  }
+
+  // Create new controller
+  const controller = new AbortController();
+  abortControllers.set(key, controller);
+  return controller.signal;
+}
+
+function clearAbortController(key: string): void {
+  abortControllers.delete(key);
+}
+
 export function useApi() {
   const config = useRuntimeConfig();
   const supabase = createSupabaseClient(
@@ -50,35 +70,71 @@ export function useApi() {
     // ============ Transactions ============
     async getTransactions(
       accountId: number,
-      params?: { limit?: number; offset?: number; year?: number }
+      params?: {
+        limit?: number;
+        offset?: number;
+        year?: number;
+        type?: string;
+        startDate?: string;
+        endDate?: string;
+      }
     ) {
-      let query = supabase
-        .from('transactions')
-        .select('*', { count: 'exact' })
-        .eq('account_id', accountId)
-        .order('date_created', { ascending: false });
+      const signal = getAbortSignal(`transactions-${accountId}`);
 
-      if (params?.limit) query = query.limit(params.limit);
-      if (params?.offset) {
-        query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
+      try {
+        let query = supabase
+          .from('transactions')
+          .select('*', { count: 'exact' })
+          .eq('account_id', accountId)
+          .abortSignal(signal)
+          .order('date_created', { ascending: false });
+
+        if (params?.limit) query = query.limit(params.limit);
+        if (params?.offset) {
+          query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
+        }
+        if (params?.year) {
+          query = query
+            .gte('date_created', `${params.year}-01-01`)
+            .lt('date_created', `${params.year + 1}-01-01`);
+        }
+        // Server-side filtering by type
+        if (params?.type && params.type !== 'all') {
+          query = query.eq('type', params.type);
+        }
+        // Server-side filtering by date range
+        if (params?.startDate) {
+          query = query.gte('date_created', params.startDate);
+        }
+        if (params?.endDate) {
+          query = query.lte('date_created', params.endDate);
+        }
+
+        const { data, error, count } = await query;
+
+        if (error) {
+          // Don't throw on abort
+          if (error.message?.includes('aborted')) return null;
+          throw new Error(error.message);
+        }
+
+        clearAbortController(`transactions-${accountId}`);
+
+        return {
+          data: data || [],
+          meta: {
+            total: count || 0,
+            limit: params?.limit || 10,
+            offset: params?.offset || 0,
+          },
+        };
+      } catch (e) {
+        // Handle abort gracefully
+        if (e instanceof Error && e.name === 'AbortError') {
+          return null;
+        }
+        throw e;
       }
-      if (params?.year) {
-        query = query
-          .gte('date_created', `${params.year}-01-01`)
-          .lt('date_created', `${params.year + 1}-01-01`);
-      }
-
-      const { data, error, count } = await query;
-      if (error) throw new Error(error.message);
-
-      return {
-        data: data || [],
-        meta: {
-          total: count || 0,
-          limit: params?.limit || 10,
-          offset: params?.offset || 0,
-        },
-      };
     },
 
     async getAccountTransactions(accountId: number, params?: { limit?: number }) {
@@ -158,6 +214,47 @@ export function useApi() {
     // ============ News ============
     async getNews(userId: number, params?: { limit?: number; offset?: number }) {
       const now = new Date().toISOString();
+      const limit = params?.limit || 10;
+
+      // Single query with LEFT JOIN to read status
+      // Uses Supabase's ability to join related tables
+      let query = supabase
+        .from('news')
+        .select(`
+          *,
+          attachments:news_attachments(*),
+          read_status:news_read_status!left(news_id)
+        `)
+        .eq('status', 'published')
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .eq('news_read_status.user_id', userId)
+        .order('is_pinned', { ascending: false })
+        .order('published_at', { ascending: false })
+        .limit(limit);
+
+      if (params?.offset) {
+        query = query.range(params.offset, params.offset + limit - 1);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        // Fallback to old method if the join fails (schema mismatch)
+        console.warn('News query with join failed, using fallback:', error.message);
+        return this.getNewsFallback(userId, params);
+      }
+
+      return (data || []).map(item => ({
+        ...item,
+        is_read: Array.isArray(item.read_status) && item.read_status.length > 0,
+        attachments: item.attachments || [],
+        read_status: undefined, // Remove the join field from output
+      })) as News[];
+    },
+
+    // Fallback method if join doesn't work (backward compatibility)
+    async getNewsFallback(userId: number, params?: { limit?: number; offset?: number }) {
+      const now = new Date().toISOString();
+      const limit = params?.limit || 10;
 
       let query = supabase
         .from('news')
@@ -168,18 +265,20 @@ export function useApi() {
         .eq('status', 'published')
         .or(`expires_at.is.null,expires_at.gt.${now}`)
         .order('is_pinned', { ascending: false })
-        .order('published_at', { ascending: false });
+        .order('published_at', { ascending: false })
+        .limit(limit);
 
-      if (params?.limit) query = query.limit(params.limit);
       if (params?.offset) {
-        query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
+        query = query.range(params.offset, params.offset + limit - 1);
       }
 
       const { data, error } = await query;
       if (error) throw new Error(error.message);
 
-      // Get read status for this user
+      // Get read status only for fetched news IDs (not all)
       const newsIds = (data || []).map(n => n.id);
+      if (newsIds.length === 0) return [];
+
       const { data: readStatuses } = await supabase
         .from('news_read_status')
         .select('news_id')
@@ -198,24 +297,38 @@ export function useApi() {
     async getUnreadNewsCount(userId: number) {
       const now = new Date().toISOString();
 
-      // Get all published news IDs
-      const { data: allNews } = await supabase
+      // Optimized: count unread news in single query using left join
+      const { data, error } = await supabase
         .from('news')
-        .select('id')
+        .select(`
+          id,
+          read_status:news_read_status!left(news_id)
+        `)
         .eq('status', 'published')
-        .or(`expires_at.is.null,expires_at.gt.${now}`);
+        .or(`expires_at.is.null,expires_at.gt.${now}`)
+        .eq('news_read_status.user_id', userId);
 
-      if (!allNews || allNews.length === 0) return 0;
+      if (error) {
+        // Fallback to counting manually
+        const { count } = await supabase
+          .from('news')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'published')
+          .or(`expires_at.is.null,expires_at.gt.${now}`);
 
-      // Get read news IDs for this user
-      const { data: readStatuses } = await supabase
-        .from('news_read_status')
-        .select('news_id')
-        .eq('user_id', userId);
+        const { data: readStatuses } = await supabase
+          .from('news_read_status')
+          .select('news_id')
+          .eq('user_id', userId);
 
-      const readNewsIds = new Set((readStatuses || []).map(rs => rs.news_id));
+        const readCount = readStatuses?.length || 0;
+        return Math.max(0, (count || 0) - readCount);
+      }
 
-      return allNews.filter(n => !readNewsIds.has(n.id)).length;
+      // Count items where read_status is empty (not read)
+      return (data || []).filter(
+        n => !Array.isArray(n.read_status) || n.read_status.length === 0
+      ).length;
     },
 
     async markNewsAsRead(newsId: number, userId: number) {
