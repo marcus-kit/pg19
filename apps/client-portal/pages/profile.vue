@@ -168,31 +168,6 @@
         </dl>
       </BaseCard>
 
-      <!-- Account Info -->
-      <BaseCard title="Лицевой счёт">
-        <dl class="space-y-4">
-          <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-            <div>
-              <dt class="text-sm text-gray-500 dark:text-gray-400">Лицевой счёт</dt>
-              <dd class="text-lg font-semibold text-gray-900 dark:text-white">{{ authStore.account?.contract_number }}-1</dd>
-            </div>
-            <BalanceDisplay :amount="authStore.currentBalance" size="lg" />
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <dt class="text-sm text-gray-500 dark:text-gray-400">Статус</dt>
-              <dd>
-                <StatusBadge :status="authStore.account?.status || 'active'" type="account" />
-              </dd>
-            </div>
-            <div v-if="authStore.account?.credit_limit">
-              <dt class="text-sm text-gray-500 dark:text-gray-400">Кредитный лимит</dt>
-              <dd class="text-gray-900 dark:text-white">{{ formatMoney(authStore.account.credit_limit) }}</dd>
-            </div>
-          </div>
-        </dl>
-      </BaseCard>
     </div>
 
     <!-- Notifications Tab -->
@@ -348,6 +323,31 @@
             {{ validationErrors.email }}
           </p>
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telegram</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">@</span>
+            <input
+              v-model="editForm.telegram_username"
+              type="text"
+              class="w-full pl-8 pr-3 py-2 border rounded-lg
+                     bg-white dark:bg-slate-700 text-gray-900 dark:text-white
+                     focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+                     placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              :class="validationErrors.telegram_username
+                ? 'border-red-500 dark:border-red-400'
+                : 'border-gray-300 dark:border-gray-600'"
+              placeholder="username"
+              @input="validateField('telegram_username')"
+            />
+          </div>
+          <p v-if="validationErrors.telegram_username" class="mt-1 text-sm text-red-500 dark:text-red-400">
+            {{ validationErrors.telegram_username }}
+          </p>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Ваш username в Telegram (без @)
+          </p>
+        </div>
         <div class="flex justify-end gap-3 pt-4">
           <BaseButton variant="ghost" :disabled="isSavingProfile" @click="closeEditModal">
             Отмена
@@ -373,11 +373,9 @@ import {
   BaseButton,
   BaseModal,
   BaseAlert,
-  BalanceDisplay,
   StatusBadge,
   formatDate,
   formatPhone,
-  formatMoney,
   formatFullName,
   formatAddress
 } from '@pg19/ui';
@@ -412,6 +410,12 @@ const emailSchema = z.string()
     message: 'Некорректный email',
   });
 
+const telegramUsernameSchema = z.string()
+  .transform(val => val.replace(/^@/, '')) // Remove @ if present
+  .refine(val => val === '' || /^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(val), {
+    message: 'Формат: 5-32 символа, буквы, цифры и _',
+  });
+
 // State
 const activeTab = ref<'personal' | 'notifications'>('personal');
 const showEditModal = ref(false);
@@ -427,6 +431,7 @@ const feedbackType = ref<'success' | 'error' | 'warning' | 'info'>('success');
 const validationErrors = reactive({
   phone: '',
   email: '',
+  telegram_username: '',
 });
 
 const tabs = [
@@ -465,6 +470,7 @@ const notificationTypes: { id: NotificationTypeId; label: string; description: s
 const editForm = reactive({
   phone: authStore.user?.phone || '',
   email: authStore.user?.email || '',
+  telegram_username: authStore.user?.telegram_username || '',
 });
 
 // Computed
@@ -505,22 +511,26 @@ const serviceAddress = computed(() => {
 
 // Form validation
 const isFormValid = computed(() => {
-  return !validationErrors.phone && !validationErrors.email;
+  return !validationErrors.phone && !validationErrors.email && !validationErrors.telegram_username;
 });
 
-function validateField(field: 'phone' | 'email') {
+function validateField(field: 'phone' | 'email' | 'telegram_username') {
   if (field === 'phone') {
     const result = phoneSchema.safeParse(editForm.phone);
     validationErrors.phone = result.success ? '' : result.error.errors[0]?.message || '';
   } else if (field === 'email') {
     const result = emailSchema.safeParse(editForm.email);
     validationErrors.email = result.success ? '' : result.error.errors[0]?.message || '';
+  } else if (field === 'telegram_username') {
+    const result = telegramUsernameSchema.safeParse(editForm.telegram_username);
+    validationErrors.telegram_username = result.success ? '' : result.error.errors[0]?.message || '';
   }
 }
 
 function validateForm(): boolean {
   validateField('phone');
   validateField('email');
+  validateField('telegram_username');
   return isFormValid.value;
 }
 
@@ -529,9 +539,11 @@ function closeEditModal() {
   // Reset form to original values
   editForm.phone = authStore.user?.phone || '';
   editForm.email = authStore.user?.email || '';
+  editForm.telegram_username = authStore.user?.telegram_username || '';
   // Clear validation errors
   validationErrors.phone = '';
   validationErrors.email = '';
+  validationErrors.telegram_username = '';
 }
 
 // Helper function to show feedback
@@ -600,6 +612,7 @@ async function saveProfile() {
       userId,
       phone: editForm.phone,
       email: editForm.email,
+      telegram_username: editForm.telegram_username,
     });
     closeEditModal();
     showFeedback('Данные профиля сохранены', 'success');

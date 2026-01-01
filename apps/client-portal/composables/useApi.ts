@@ -462,7 +462,7 @@ export function useApi() {
     },
 
     // ============ Profile ============
-    async updateProfile(params: { userId: number; phone?: string; email?: string }) {
+    async updateProfile(params: { userId: number; phone?: string; email?: string; telegram_username?: string }) {
       return await $fetch<{ success: boolean; user: Person }>(
         `${config.public.supabaseUrl}/functions/v1/update-profile`,
         {
