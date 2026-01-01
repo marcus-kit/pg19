@@ -58,38 +58,38 @@ defineEmits<{
 }>();
 
 const variantClasses = computed(() => ({
-  info: 'bg-primary-50',
-  success: 'bg-green-50',
-  warning: 'bg-orange-50',
-  error: 'bg-pink-50',
+  info: 'bg-primary-50 dark:bg-primary-900/30',
+  success: 'bg-green-50 dark:bg-green-900/30',
+  warning: 'bg-orange-50 dark:bg-orange-900/30',
+  error: 'bg-pink-50 dark:bg-pink-900/30',
 }[props.variant]));
 
 const iconColorClass = computed(() => ({
-  info: 'text-primary-400',
-  success: 'text-green-400',
-  warning: 'text-orange-400',
-  error: 'text-accent-pink',
+  info: 'text-primary-400 dark:text-primary-300',
+  success: 'text-green-400 dark:text-green-300',
+  warning: 'text-orange-400 dark:text-orange-300',
+  error: 'text-accent-pink dark:text-pink-300',
 }[props.variant]));
 
 const titleColorClass = computed(() => ({
-  info: 'text-primary-800',
-  success: 'text-green-800',
-  warning: 'text-orange-800',
-  error: 'text-pink-800',
+  info: 'text-primary-800 dark:text-primary-200',
+  success: 'text-green-800 dark:text-green-200',
+  warning: 'text-orange-800 dark:text-orange-200',
+  error: 'text-pink-800 dark:text-pink-200',
 }[props.variant]));
 
 const contentColorClass = computed(() => ({
-  info: 'text-primary-700',
-  success: 'text-green-700',
-  warning: 'text-orange-700',
-  error: 'text-pink-700',
+  info: 'text-primary-700 dark:text-primary-300',
+  success: 'text-green-700 dark:text-green-300',
+  warning: 'text-orange-700 dark:text-orange-300',
+  error: 'text-pink-700 dark:text-pink-300',
 }[props.variant]));
 
 const dismissButtonClasses = computed(() => ({
-  info: 'bg-primary-50 text-primary-500 hover:bg-primary-100 focus:ring-primary-500',
-  success: 'bg-green-50 text-green-500 hover:bg-green-100 focus:ring-green-500',
-  warning: 'bg-orange-50 text-orange-500 hover:bg-orange-100 focus:ring-orange-500',
-  error: 'bg-pink-50 text-pink-500 hover:bg-pink-100 focus:ring-pink-500',
+  info: 'bg-primary-50 dark:bg-primary-900/50 text-primary-500 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-800/50 focus:ring-primary-500',
+  success: 'bg-green-50 dark:bg-green-900/50 text-green-500 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-800/50 focus:ring-green-500',
+  warning: 'bg-orange-50 dark:bg-orange-900/50 text-orange-500 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-800/50 focus:ring-orange-500',
+  error: 'bg-pink-50 dark:bg-pink-900/50 text-pink-500 dark:text-pink-300 hover:bg-pink-100 dark:hover:bg-pink-800/50 focus:ring-pink-500',
 }[props.variant]));
 
 const icons = {

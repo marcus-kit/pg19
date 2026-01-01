@@ -460,5 +460,57 @@ export function useApi() {
         );
       },
     },
+
+    // ============ Profile ============
+    async updateProfile(params: { userId: number; phone?: string; email?: string }) {
+      return await $fetch<{ success: boolean; user: Person }>(
+        `${config.public.supabaseUrl}/functions/v1/update-profile`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: params,
+        }
+      );
+    },
+
+    // ============ Notification Settings ============
+    async getNotificationSettings(userId: number) {
+      const { data, error } = await supabase
+        .from('notification_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+
+    async updateNotificationSettings(params: {
+      userId: number;
+      channels: {
+        email: boolean;
+        sms: boolean;
+        telegram: boolean;
+        push: boolean;
+      };
+      types: {
+        balance_low: boolean;
+        payment_received: boolean;
+        charges: boolean;
+        invoices: boolean;
+        tickets: boolean;
+        maintenance: boolean;
+        promos: boolean;
+      };
+    }) {
+      return await $fetch<{ success: boolean; settings: unknown }>(
+        `${config.public.supabaseUrl}/functions/v1/update-notifications`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: params,
+        }
+      );
+    },
   };
 }
