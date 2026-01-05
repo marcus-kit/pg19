@@ -7,17 +7,16 @@ interface ContractAuthRequest {
   lastName: string;
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 Deno.serve(async (req: Request) => {
-  // CORS headers
+  // CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -26,7 +25,7 @@ Deno.serve(async (req: Request) => {
     if (!contractNumber || !firstName || !lastName) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -35,22 +34,30 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Find contract by number with user and account
-    const { data: contract, error: contractError } = await supabase
-      .from('contracts')
-      .select('*, person_id(*), account:accounts(*)')
+    // Find account by contract_number with user data
+    // Schema: accounts table now contains contract data (merged from contracts table)
+    const { data: account, error: accountError } = await supabase
+      .from('accounts')
+      .select('*, user:user_id(*)')
       .eq('contract_number', contractNumber)
-      .eq('status', 'active')
+      .eq('contract_status', 'active')
       .single();
 
-    if (contractError || !contract) {
+    if (accountError || !account) {
       return new Response(
         JSON.stringify({ error: 'Contract not found or inactive' }),
-        { status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    const user = contract.person_id;
+    const user = account.user;
+
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: 'User not found for this account' }),
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
 
     // Verify user's name (case-insensitive)
     if (
@@ -59,57 +66,27 @@ Deno.serve(async (req: Request) => {
     ) {
       return new Response(
         JSON.stringify({ error: 'Name does not match contract' }),
-        { status: 401, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Get the single account for this contract
-    const { data: account, error: accountError } = await supabase
-      .from('accounts')
-      .select('*')
-      .eq('contract_id', contract.id)
-      .single();
-
-    if (accountError || !account) {
-      return new Response(
-        JSON.stringify({ error: 'Account not found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
-      );
-    }
+    // Remove nested user from account to avoid duplication in response
+    const { user: _user, ...accountData } = account;
 
     return new Response(
       JSON.stringify({
         person: user,
-        contract: {
-          id: contract.id,
-          contract_number: contract.contract_number,
-          person_id: contract.person_id,
-          status: contract.status,
-          start_date: contract.start_date,
-          end_date: contract.end_date,
-          address_city: contract.address_city,
-          address_street: contract.address_street,
-          address_building: contract.address_building,
-          address_apartment: contract.address_apartment,
-          address_full: contract.address_full,
-          notes: contract.notes,
-          date_created: contract.date_created,
-          date_updated: contract.date_updated,
-        },
-        account,
+        account: accountData,
       }),
       {
         status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
       }
     );
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 });

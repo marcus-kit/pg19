@@ -1,16 +1,15 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -19,7 +18,7 @@ Deno.serve(async (req: Request) => {
     if (!sessionId) {
       return new Response(
         JSON.stringify({ error: 'Session ID required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -39,7 +38,7 @@ Deno.serve(async (req: Request) => {
     if (sessionError || !session) {
       return new Response(
         JSON.stringify({ status: 'expired', message: 'Session not found' }),
-        { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -47,7 +46,7 @@ Deno.serve(async (req: Request) => {
     if (new Date(session.expires_at) < new Date()) {
       return new Response(
         JSON.stringify({ status: 'expired', message: 'Session expired' }),
-        { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -55,49 +54,30 @@ Deno.serve(async (req: Request) => {
     if (!session.verified || !session.person_id) {
       return new Response(
         JSON.stringify({ status: 'pending' }),
-        { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Session is verified - get user data
+    // Session is verified - get user with account in one query
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('*')
+      .select('*, account:accounts(*)')
       .eq('id', session.person_id)
       .single();
 
     if (userError || !user) {
       return new Response(
         JSON.stringify({ status: 'expired', message: 'User not found' }),
-        { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Get contract
-    const { data: contract, error: contractError } = await supabase
-      .from('contracts')
-      .select('*')
-      .eq('person_id', user.id)
-      .single();
+    const account = user.account;
 
-    if (contractError || !contract) {
-      return new Response(
-        JSON.stringify({ status: 'expired', message: 'Contract not found' }),
-        { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
-      );
-    }
-
-    // Get account
-    const { data: account, error: accountError } = await supabase
-      .from('accounts')
-      .select('*')
-      .eq('contract_id', contract.id)
-      .single();
-
-    if (accountError || !account) {
+    if (!account) {
       return new Response(
         JSON.stringify({ status: 'expired', message: 'Account not found' }),
-        { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -107,28 +87,27 @@ Deno.serve(async (req: Request) => {
       .delete()
       .eq('id', session.id);
 
+    // Remove nested account from user to avoid duplication
+    const { account: _account, ...userData } = user;
+
     return new Response(
       JSON.stringify({
         status: 'verified',
         data: {
-          person: user,
-          contract,
+          person: userData,
           account,
         },
       }),
       {
         status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
       }
     );
   } catch (error) {
     console.error('Error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 });

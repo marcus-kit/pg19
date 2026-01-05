@@ -1,11 +1,18 @@
 import { createReadStream } from 'fs';
 import { parse } from 'csv-parse';
 import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
 
-const SUPABASE_URL = 'https://bjvqukdmexkleunkehez.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqdnF1a2RtZXhrbGV1bmtlaGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTgwMTUsImV4cCI6MjA4MjYzNDAxNX0.6Uy-b6JP3QHD1n630mRiqIAvt21jsNh4RV9hL4o7pYg';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('Error: Missing required environment variables');
+  console.error('Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env file');
+  process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 interface CSVRow {
   id: string;

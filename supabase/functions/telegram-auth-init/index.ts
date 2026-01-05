@@ -1,16 +1,15 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -19,7 +18,7 @@ Deno.serve(async (req: Request) => {
     if (!botUsername) {
       return new Response(
         JSON.stringify({ error: 'Telegram not configured' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -28,15 +27,15 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Generate session ID
+    // Generate session ID (UUID for uniqueness)
     const sessionId = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes
 
     // Create session in database
+    // Let database auto-generate the id (BIGINT serial)
     const { error: insertError } = await supabase
       .from('auth_sessions')
       .insert({
-        id: Math.floor(Math.random() * 1000000000),
         method: 'telegram',
         identifier: sessionId,
         verified: false,
@@ -48,7 +47,7 @@ Deno.serve(async (req: Request) => {
       console.error('Insert error:', insertError);
       return new Response(
         JSON.stringify({ error: 'Failed to create session' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -63,17 +62,14 @@ Deno.serve(async (req: Request) => {
       }),
       {
         status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
       }
     );
   } catch (error) {
     console.error('Error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 });
